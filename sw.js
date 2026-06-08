@@ -1,4 +1,4 @@
-const CACHE_NAME = 'campus-dining-v1';
+const CACHE_NAME = 'campus-dining-v2';
 const ASSETS = [
   './',
   './index.html',

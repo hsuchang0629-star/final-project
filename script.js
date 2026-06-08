@@ -769,8 +769,8 @@ document.addEventListener("DOMContentLoaded", () => {
     if (start === "gps") {
       // Fetch GPS routing
       if (!userCoords) {
-        // Fallback if GPS not enabled yet
-        userCoords = campusCenterFallback;
+        triggerRouteGpsLocation();
+        return; // Wait for GPS callback to resolve
       }
       
       const distance = calculateHaversineDistance(
@@ -982,26 +982,49 @@ document.addEventListener("DOMContentLoaded", () => {
     gpsRouteStatus.textContent = "正在取得 GPS 定位中...";
     gpsRouteStatus.className = "text-xs font-semibold pl-2 mt-1 text-amber-600 animate-pulse";
     
+    const options = { enableHighAccuracy: true, timeout: 6000, maximumAge: 0 };
+    
     navigator.geolocation.getCurrentPosition(
       (position) => {
         userCoords = {
           lat: position.coords.latitude,
           lng: position.coords.longitude
         };
-        // Select GPS option in dropdown and trigger calculation
+        gpsRouteStatus.textContent = "📍 定位成功！";
+        gpsRouteStatus.className = "text-xs font-semibold pl-2 mt-1 text-green-600";
         routeStartNode.value = "gps";
         calculateRoutePlanner();
       },
       (error) => {
-        console.error("GPS Error:", error);
-        gpsRouteStatus.textContent = "❌ GPS 定位失敗，使用預設校園位置做模擬。";
-        gpsRouteStatus.className = "text-xs font-semibold pl-2 mt-1 text-red-600";
-        // Fallback
-        userCoords = campusCenterFallback;
-        routeStartNode.value = "gps";
-        calculateRoutePlanner();
+        console.warn("GPS High Accuracy Error, retrying with low accuracy:", error);
+        // Retry with low accuracy (much faster, resolves immediately)
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            userCoords = {
+              lat: pos.coords.latitude,
+              lng: pos.coords.longitude
+            };
+            gpsRouteStatus.textContent = "📍 定位成功！";
+            gpsRouteStatus.className = "text-xs font-semibold pl-2 mt-1 text-green-600";
+            routeStartNode.value = "gps";
+            calculateRoutePlanner();
+          },
+          (err) => {
+            console.error("GPS Fallback Error:", err);
+            let errMsg = "❌ GPS 定位失敗，使用預設校園位置做模擬。";
+            if (err.code === err.PERMISSION_DENIED) {
+              errMsg = "❌ 定位權限被拒絕，請在瀏覽器設定中開啟定位。";
+            }
+            gpsRouteStatus.textContent = errMsg;
+            gpsRouteStatus.className = "text-xs font-semibold pl-2 mt-1 text-red-600";
+            userCoords = campusCenterFallback;
+            routeStartNode.value = "gps";
+            calculateRoutePlanner();
+          },
+          { enableHighAccuracy: false, timeout: 8000 }
+        );
       },
-      { enableHighAccuracy: true, timeout: 5000 }
+      options
     );
   }
 
@@ -1016,7 +1039,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Start building dropdown change resets GPS mode status
   routeStartNode.addEventListener("change", () => {
-    if (routeStartNode.value !== "gps") {
+    if (routeStartNode.value === "gps") {
+      triggerRouteGpsLocation();
+    } else {
       gpsRouteStatus.classList.add("hidden");
     }
   });
