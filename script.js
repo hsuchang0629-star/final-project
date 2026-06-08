@@ -1161,11 +1161,22 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
 
-// Register Service Worker for PWA
+// // 把這段程式碼直接刪除，或者在每行前面加上 // 註解掉
+// if ('serviceWorker' in navigator) {
+//   window.addEventListener('load', () => {
+//     navigator.serviceWorker.register('./sw.js')
+//       .then((reg) => console.log('Service Worker registered successfully with scope:', reg.scope))
+//       .catch((err) => console.error('Service Worker registration failed:', err));
+//   });
+// }
+
+// 自動註銷並清理之前的 Service Worker，避免快取導致手機版面不更新
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js')
-      .then((reg) => console.log('Service Worker registered successfully with scope:', reg.scope))
-      .catch((err) => console.error('Service Worker registration failed:', err));
+  navigator.serviceWorker.getRegistrations().then((registrations) => {
+    for (let registration of registrations) {
+      registration.unregister().then(() => {
+        console.log('已自動清除舊版快取服務 (Service Worker Unregistered)');
+      });
+    }
   });
 }
