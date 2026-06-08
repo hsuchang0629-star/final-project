@@ -10,6 +10,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Coordinates for GPS simulation fallback (NTUT 第一教學大樓)
   let userCoords = null; 
+  let isUsingFallbackGps = false;
   const campusCenterFallback = { lat: 25.043438448943615, lng: 121.53385514843093 };
 
   // Dynamic weight calculation function using Haversine distance
@@ -768,13 +769,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (start === "gps") {
       // Fetch GPS routing
-      if (!userCoords) {
-        triggerRouteGpsLocation();
-        return; // Wait for GPS callback to resolve
+      let coordsToUse = userCoords;
+      if (!coordsToUse) {
+        if (isUsingFallbackGps) {
+          coordsToUse = campusCenterFallback;
+        } else {
+          triggerRouteGpsLocation();
+          return; // Wait for GPS callback to resolve
+        }
       }
       
       const distance = calculateHaversineDistance(
-        userCoords.lat, userCoords.lng,
+        coordsToUse.lat, coordsToUse.lng,
         canteen.lat, canteen.lng
       );
 
@@ -801,8 +807,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
       // Save GPS status text
       gpsRouteStatus.classList.remove("hidden");
-      gpsRouteStatus.className = "text-xs font-semibold pl-2 mt-1 text-green-600";
-      gpsRouteStatus.textContent = `📍 定位成功：距離 ${end} 約 ${Math.round(distance)} 公尺。`;
+      if (coordsToUse === campusCenterFallback) {
+        gpsRouteStatus.className = "text-xs font-semibold pl-2 mt-1 text-amber-600";
+        gpsRouteStatus.textContent = `⚠️ 定位失敗，使用預設校園位置做模擬：距離 ${end} 約 ${Math.round(distance)} 公尺。`;
+      } else {
+        gpsRouteStatus.className = "text-xs font-semibold pl-2 mt-1 text-green-600";
+        gpsRouteStatus.textContent = `📍 定位成功：距離 ${end} 約 ${Math.round(distance)} 公尺。`;
+      }
 
     } else {
       // Clear GPS status classes
@@ -853,8 +864,11 @@ document.addEventListener("DOMContentLoaded", () => {
       
       let otherWalk = 0;
       if (start === "gps") {
-        const d = calculateHaversineDistance(userCoords.lat, userCoords.lng, otherCanteen.lat, otherCanteen.lng);
-        otherWalk = Math.max(1, Math.round(d / 80));
+        let coordsToUse = userCoords || (isUsingFallbackGps ? campusCenterFallback : null);
+        if (coordsToUse) {
+          const d = calculateHaversineDistance(coordsToUse.lat, coordsToUse.lng, otherCanteen.lat, otherCanteen.lng);
+          otherWalk = Math.max(1, Math.round(d / 80));
+        }
       } else {
         const otherPath = runDijkstra(graph, start, "學生餐廳");
         otherWalk = otherPath.distance;
@@ -978,6 +992,9 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function triggerRouteGpsLocation() {
+    userCoords = null;
+    isUsingFallbackGps = false;
+
     gpsRouteStatus.classList.remove("hidden");
     gpsRouteStatus.textContent = "正在取得 GPS 定位中...";
     gpsRouteStatus.className = "text-xs font-semibold pl-2 mt-1 text-amber-600 animate-pulse";
@@ -990,6 +1007,7 @@ document.addEventListener("DOMContentLoaded", () => {
           lat: position.coords.latitude,
           lng: position.coords.longitude
         };
+        isUsingFallbackGps = false;
         gpsRouteStatus.textContent = "📍 定位成功！";
         gpsRouteStatus.className = "text-xs font-semibold pl-2 mt-1 text-green-600";
         routeStartNode.value = "gps";
@@ -1004,6 +1022,7 @@ document.addEventListener("DOMContentLoaded", () => {
               lat: pos.coords.latitude,
               lng: pos.coords.longitude
             };
+            isUsingFallbackGps = false;
             gpsRouteStatus.textContent = "📍 定位成功！";
             gpsRouteStatus.className = "text-xs font-semibold pl-2 mt-1 text-green-600";
             routeStartNode.value = "gps";
@@ -1017,7 +1036,10 @@ document.addEventListener("DOMContentLoaded", () => {
             }
             gpsRouteStatus.textContent = errMsg;
             gpsRouteStatus.className = "text-xs font-semibold pl-2 mt-1 text-red-600";
-            userCoords = campusCenterFallback;
+            
+            userCoords = null;
+            isUsingFallbackGps = true;
+            
             routeStartNode.value = "gps";
             calculateRoutePlanner();
           },

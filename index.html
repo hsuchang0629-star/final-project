@@ -310,15 +310,12 @@
               <!-- 飲食偏好 -->
               <div class="flex flex-col gap-xs">
                 <label class="font-label-md text-label-md text-on-surface-variant px-xs font-bold">飲食偏好</label>
-                <div class="relative">
-                  <select id="recommend-category" class="w-full bg-surface-container-low border-outline-variant focus:ring-primary focus:border-primary rounded-xl px-md py-sm font-body-md text-body-md appearance-none cursor-pointer font-bold">
-                    <option value="none">無</option>
-                    <option value="速食">速食</option>
-                    <option value="點心">點心</option>
-                    <option value="便當">便當</option>
-                  </select>
-                  <span class="material-symbols-outlined absolute right-md top-1/2 -translate-y-1/2 pointer-events-none text-[#82756a]">expand_more</span>
-                </div>
+                <select id="recommend-category" class="w-full bg-surface-container-low border-outline-variant focus:ring-primary focus:border-primary rounded-xl px-md py-sm font-body-md text-body-md cursor-pointer font-bold">
+                  <option value="none">無</option>
+                  <option value="速食">速食</option>
+                  <option value="點心">點心</option>
+                  <option value="便當">便當</option>
+                </select>
               </div>
               <!-- 時間要求 (可接受的最久等待時間) -->
               <div class="flex flex-col gap-xs">
@@ -459,25 +456,19 @@
                     開啟定位
                   </button>
                 </div>
-                <div class="relative">
-                  <select id="route-start-node" class="w-full bg-surface border-outline-variant rounded-xl px-md py-3 focus:ring-2 focus:ring-primary focus:border-transparent transition-all appearance-none cursor-pointer font-bold">
-                    <option value="gps">📍 GPS 目前位置</option>
-                    <!-- Populated dynamically -->
-                  </select>
-                  <span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-on-surface-variant">expand_more</span>
-                </div>
+                <select id="route-start-node" class="w-full bg-surface border-outline-variant rounded-xl px-md py-3 focus:ring-2 focus:ring-primary focus:border-transparent transition-all cursor-pointer font-bold">
+                  <option value="gps">📍 GPS 目前位置</option>
+                  <!-- Populated dynamically -->
+                </select>
                 <p id="gps-route-status" class="text-xs font-semibold pl-2 mt-1 hidden"></p>
               </div>
               
               <!-- 目標餐廳 -->
               <div class="flex flex-col gap-2">
                 <label class="font-label-md text-on-surface-variant ml-2 font-bold">目標餐廳</label>
-                <div class="relative">
-                  <select id="route-end-node" class="w-full bg-surface border-outline-variant rounded-xl px-md py-3 focus:ring-2 focus:ring-primary focus:border-transparent transition-all appearance-none cursor-pointer font-bold">
-                    <!-- Populated dynamically -->
-                  </select>
-                  <span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-on-surface-variant">expand_more</span>
-                </div>
+                <select id="route-end-node" class="w-full bg-surface border-outline-variant rounded-xl px-md py-3 focus:ring-2 focus:ring-primary focus:border-transparent transition-all cursor-pointer font-bold">
+                  <!-- Populated dynamically -->
+                </select>
               </div>
               <button id="btn-route-submit" class="w-full bg-primary text-on-primary font-label-md py-4 rounded-full flex items-center justify-center gap-2 hover:opacity-90 transition-all shadow-sm active:scale-95 mt-4 font-bold">
                 <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">location_on</span>
