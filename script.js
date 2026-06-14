@@ -235,11 +235,15 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  btnThemeToggle.addEventListener("click", toggleTheme);
-  mobBtnThemeToggle.addEventListener("click", () => {
-    toggleTheme();
-    mobileNav.classList.add("hidden");
-  });
+  if (btnThemeToggle) {
+    btnThemeToggle.addEventListener("click", toggleTheme);
+  }
+  if (mobBtnThemeToggle) {
+    mobBtnThemeToggle.addEventListener("click", () => {
+      toggleTheme();
+      mobileNav.classList.add("hidden");
+    });
+  }
 
   // ==========================================
   // 5. Tab Navigation Switching
@@ -404,10 +408,10 @@ document.addEventListener("DOMContentLoaded", () => {
       const storeConfig = storeDetailsConfig[r.name] || {};
 
       const card = document.createElement("div");
-      card.className = "bg-surface-container-lowest rounded-24 p-lg soft-shadow border border-outline-variant/30 group hover:-translate-y-1 transition-all duration-300 cursor-pointer flex flex-col justify-between h-72";
+      card.className = "bg-surface-container-lowest rounded-24 p-lg soft-shadow border border-outline-variant/30 group hover:-translate-y-1 transition-all duration-300 cursor-pointer flex flex-col justify-between h-80 sm:h-72 text-center sm:text-left items-center sm:items-stretch";
       card.innerHTML = `
-        <div>
-          <div class="flex justify-between items-start mb-md">
+        <div class="w-full flex flex-col items-center sm:items-stretch">
+          <div class="flex flex-col sm:flex-row justify-between items-center sm:items-start gap-sm sm:gap-0 mb-md w-full">
             <div class="w-12 h-12 rounded-xl bg-surface-container-high dark:bg-[#3d3d3d] flex items-center justify-center text-primary shrink-0">
               <span class="material-symbols-outlined text-[28px]">${icon}</span>
             </div>
@@ -415,12 +419,12 @@ document.addEventListener("DOMContentLoaded", () => {
               <span class="w-2 h-2 rounded-full ${dotColor} pulse-dot"></span> ${label}
             </span>
           </div>
-          <div class="space-y-xs">
+          <div class="space-y-xs w-full">
             <p class="text-on-surface-variant dark:text-outline font-label-sm text-label-sm uppercase font-bold">${r.type}</p>
             <h4 class="font-headline-md text-headline-md text-on-surface dark:text-[#fcf9f5] font-bold group-hover:text-primary transition-colors">${r.name}</h4>
           </div>
         </div>
-        <div class="pt-lg border-t border-outline-variant/30 flex items-center justify-between">
+        <div class="pt-lg border-t border-outline-variant/30 flex flex-col sm:flex-row items-center sm:justify-between gap-xs sm:gap-0 w-full">
           <span class="text-on-surface-variant dark:text-outline font-body-md text-body-md font-bold">等待時間</span>
           <span class="text-headline-md font-extrabold ${waitColor}">${r.waitTime} 分鐘</span>
         </div>
