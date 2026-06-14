@@ -103,6 +103,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const navRoute = document.getElementById("nav-route");
   const btnMobileMenu = document.getElementById("btn-mobile-menu");
   const mobileNav = document.getElementById("mobile-nav");
+  const mainContent = document.getElementById("main-content");
   const mobNavDashboard = document.getElementById("mob-nav-dashboard");
   const mobNavRecommend = document.getElementById("mob-nav-recommend");
   const mobNavRoute = document.getElementById("mob-nav-route");
@@ -254,6 +255,19 @@ document.addEventListener("DOMContentLoaded", () => {
   const activeMobNavClass = "w-full text-left text-xs font-bold text-primary bg-primary-fixed-dim/20 py-1.5 px-2 rounded-lg hover:bg-surface-container transition-all";
   const inactiveMobNavClass = "w-full text-left text-xs font-medium text-on-surface-variant dark:text-surface-variant py-1.5 px-2 rounded-lg hover:bg-surface-container transition-all";
 
+  function toggleMobileMenu() {
+    const isExpanded = mobileNav.classList.contains("opacity-100");
+    if (isExpanded) {
+      mobileNav.classList.remove("max-h-64", "opacity-100", "pointer-events-auto");
+      mobileNav.classList.add("max-h-0", "opacity-0", "pointer-events-none");
+      mainContent.classList.remove("translate-x-12");
+    } else {
+      mobileNav.classList.remove("max-h-0", "opacity-0", "pointer-events-none");
+      mobileNav.classList.add("max-h-64", "opacity-100", "pointer-events-auto");
+      mainContent.classList.add("translate-x-12");
+    }
+  }
+
   function switchTab(targetTab) {
     // Hide all
     tabDashboardContainer.classList.add("hidden");
@@ -285,7 +299,11 @@ document.addEventListener("DOMContentLoaded", () => {
       mobNavRoute.className = activeMobNavClass;
       calculateRoutePlanner();
     }
-    mobileNav.classList.add("hidden");
+    
+    // Collapse mobile menu and reset main offset
+    mobileNav.classList.remove("max-h-64", "opacity-100", "pointer-events-auto");
+    mobileNav.classList.add("max-h-0", "opacity-0", "pointer-events-none");
+    mainContent.classList.remove("translate-x-12");
   }
 
   navLogo.addEventListener("click", () => switchTab("dashboard"));
@@ -297,9 +315,7 @@ document.addEventListener("DOMContentLoaded", () => {
   mobNavRecommend.addEventListener("click", () => switchTab("recommend"));
   mobNavRoute.addEventListener("click", () => switchTab("route"));
 
-  btnMobileMenu.addEventListener("click", () => {
-    mobileNav.classList.toggle("hidden");
-  });
+  btnMobileMenu.addEventListener("click", toggleMobileMenu);
 
   // Hero Section redirects
   btnHeroExplore.addEventListener("click", () => switchTab("recommend"));
