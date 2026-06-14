@@ -251,8 +251,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const activeNavClass = "font-label-md text-label-md text-primary dark:text-primary-fixed-dim border-b-2 border-primary dark:border-primary-fixed-dim pb-1 font-bold transition-all";
   const inactiveNavClass = "font-label-md text-label-md text-on-surface-variant dark:text-surface-variant font-medium hover:text-primary transition-colors duration-300 pb-1";
 
-  const activeMobNavClass = "w-full text-left font-label-md text-label-md text-primary font-bold py-2";
-  const inactiveMobNavClass = "w-full text-left font-label-md text-label-md text-on-surface-variant dark:text-surface-variant font-medium py-2";
+  const activeMobNavClass = "w-full text-left text-xs font-bold text-primary bg-primary-fixed-dim/20 py-1.5 px-2 rounded-lg hover:bg-surface-container transition-all";
+  const inactiveMobNavClass = "w-full text-left text-xs font-medium text-on-surface-variant dark:text-surface-variant py-1.5 px-2 rounded-lg hover:bg-surface-container transition-all";
 
   function switchTab(targetTab) {
     // Hide all
@@ -408,10 +408,10 @@ document.addEventListener("DOMContentLoaded", () => {
       const storeConfig = storeDetailsConfig[r.name] || {};
 
       const card = document.createElement("div");
-      card.className = "bg-surface-container-lowest rounded-24 p-lg soft-shadow border border-outline-variant/30 group hover:-translate-y-1 transition-all duration-300 cursor-pointer flex flex-col justify-between h-80 sm:h-72 text-center sm:text-left items-center sm:items-stretch";
+      card.className = "bg-surface-container-lowest rounded-24 p-5 sm:p-6 soft-shadow border border-outline-variant/30 group hover:-translate-y-1 transition-all duration-300 cursor-pointer flex flex-col justify-between h-[280px] sm:h-[260px] text-center sm:text-left items-center sm:items-stretch";
       card.innerHTML = `
         <div class="w-full flex flex-col items-center sm:items-stretch">
-          <div class="flex flex-col sm:flex-row justify-between items-center sm:items-start gap-sm sm:gap-0 mb-md w-full">
+          <div class="flex flex-col sm:flex-row justify-between items-center sm:items-start gap-sm sm:gap-0 mb-4 w-full">
             <div class="w-12 h-12 rounded-xl bg-surface-container-high dark:bg-[#3d3d3d] flex items-center justify-center text-primary shrink-0">
               <span class="material-symbols-outlined text-[28px]">${icon}</span>
             </div>
@@ -424,7 +424,7 @@ document.addEventListener("DOMContentLoaded", () => {
             <h4 class="font-headline-md text-headline-md text-on-surface dark:text-[#fcf9f5] font-bold group-hover:text-primary transition-colors">${r.name}</h4>
           </div>
         </div>
-        <div class="pt-lg border-t border-outline-variant/30 flex flex-col sm:flex-row items-center sm:justify-between gap-xs sm:gap-0 w-full">
+        <div class="pt-4 border-t border-outline-variant/30 flex flex-col sm:flex-row items-center sm:justify-between gap-xs sm:gap-0 w-full">
           <span class="text-on-surface-variant dark:text-outline font-body-md text-body-md font-bold">等待時間</span>
           <span class="text-headline-md font-extrabold ${waitColor}">${r.waitTime} 分鐘</span>
         </div>
