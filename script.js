@@ -620,22 +620,15 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // Dashboard Refresh Button (fluctuate queues slightly)
+  // Dashboard Refresh Button (refresh display with fixed data)
   btnDashboardRefresh.addEventListener("click", () => {
+    // Reset to initial default queue values to ensure static consistency
     restaurants.forEach(r => {
-      const qDeltaMin = Math.floor(Math.random() * 3) - 1; // -1 to +1
-      const qDeltaMax = Math.floor(Math.random() * 3) - 1;
-      
-      if (r.name === "麗宴精緻自助餐") {
-        r.minQueue = Math.max(5, Math.min(25, r.minQueue + qDeltaMin));
-        r.maxQueue = Math.max(r.minQueue + 5, Math.min(35, r.maxQueue + qDeltaMax));
-      } else if (r.name === "宣坊泰式料理") {
-        r.minQueue = Math.max(8, Math.min(20, r.minQueue + qDeltaMin));
-        r.maxQueue = Math.max(r.minQueue + 4, Math.min(30, r.maxQueue + qDeltaMax));
-      } else {
-        r.minQueue = Math.max(1, Math.min(10, r.minQueue + qDeltaMin));
-        r.maxQueue = Math.max(r.minQueue + 1, Math.min(20, r.maxQueue + qDeltaMax));
-      }
+      if (r.name === "麗宴精緻自助餐") { r.minQueue = 10; r.maxQueue = 20; }
+      else if (r.name === "喜歡你飯捲年糕") { r.minQueue = 4; r.maxQueue = 8; }
+      else if (r.name === "天津蔥抓餅") { r.minQueue = 2; r.maxQueue = 4; }
+      else if (r.name === "摩斯漢堡") { r.minQueue = 8; r.maxQueue = 16; }
+      else if (r.name === "宣坊泰式料理") { r.minQueue = 14; r.maxQueue = 22; }
     });
 
     calculateWaitTimes();
