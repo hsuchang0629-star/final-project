@@ -474,13 +474,18 @@
             <div id="route-path-steps" class="flex flex-wrap items-center gap-3 mb-lg text-on-surface-variant font-label-md font-bold">
               <span>(請先選擇起訖點並開始規劃)</span>
             </div>
-            <!-- Campus Map Graphic -->
-            <div class="bg-surface border border-outline-variant rounded-24 p-4 sm:p-6 md:p-8 relative overflow-x-auto aspect-[4/3] sm:aspect-[21/9] flex items-center justify-start sm:justify-center">
-              <div class="absolute inset-0 opacity-10 pointer-events-none bg-[radial-gradient(#82756a_1px,transparent_1px)] [background-size:24px_24px]"></div>
-              
-              <!-- Dynamic Map Node Rendering Area -->
-              <div id="route-map-graph" class="relative w-full h-full max-w-2xl flex items-center justify-around min-w-[500px] sm:min-w-0">
-                <!-- Injected dynamically by script.js -->
+            <!-- Campus Map Graphic (Google-Map style) -->
+            <div class="relative bg-surface border border-outline-variant rounded-24 overflow-hidden shadow-sm aspect-[1024/627] w-full">
+              <!-- Map Container -->
+              <div id="route-map-container" class="relative w-full h-full overflow-hidden select-none bg-slate-100">
+                <!-- Campus Map Image -->
+                <img id="campus-map-img" src="data/campus_map.png" class="w-full h-full object-fill absolute inset-0 pointer-events-none" alt="校園地圖"/>
+                
+                <!-- SVG overlay to draw route lines -->
+                <svg id="route-map-svg" class="absolute inset-0 w-full h-full pointer-events-none z-10"></svg>
+                
+                <!-- HTML overlay for pins and labels -->
+                <div id="route-map-overlay" class="absolute inset-0 z-20 pointer-events-none w-full h-full"></div>
               </div>
             </div>
           </section>
