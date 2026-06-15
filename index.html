@@ -16,15 +16,19 @@
         }
       });
     }
+    // Force clear Cache Storage to ensure the latest script.js and data are loaded
+    if ('caches' in window) {
+      caches.keys().then(function(cacheNames) {
+        cacheNames.forEach(function(cacheName) {
+          caches.delete(cacheName);
+        });
+      });
+    }
   </script>
   
-  <!-- PWA Mobile App Meta Tags & Installability -->
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <meta name="apple-mobile-web-app-title" content="CampusBistro">
-  <meta name="theme-color" content="#79542e">
-  <link rel="manifest" href="manifest.json">
-  <link rel="apple-touch-icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512' fill='%2379542e'><circle cx='256' cy='256' r='256'/><text x='50%' y='65%' font-family='sans-serif' font-size='180' font-weight='bold' fill='white' text-anchor='middle'>學餐</text></svg>">
+  <!-- Leaflet Map Library -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   
   <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
@@ -474,19 +478,9 @@
             <div id="route-path-steps" class="flex flex-wrap items-center gap-3 mb-lg text-on-surface-variant font-label-md font-bold">
               <span>(請先選擇起訖點並開始規劃)</span>
             </div>
-            <!-- Campus Map Graphic (Google-Map style) -->
-            <div class="relative bg-surface border border-outline-variant rounded-24 overflow-hidden shadow-sm aspect-[1024/627] w-full">
-              <!-- Map Container -->
-              <div id="route-map-container" class="relative w-full h-full overflow-hidden select-none bg-slate-100">
-                <!-- Campus Map Image -->
-                <img id="campus-map-img" src="data/campus_map.png" class="w-full h-full object-fill absolute inset-0 pointer-events-none" alt="校園地圖"/>
-                
-                <!-- SVG overlay to draw route lines -->
-                <svg id="route-map-svg" class="absolute inset-0 w-full h-full pointer-events-none z-10"></svg>
-                
-                <!-- HTML overlay for pins and labels -->
-                <div id="route-map-overlay" class="absolute inset-0 z-20 pointer-events-none w-full h-full"></div>
-              </div>
+            <!-- Campus Map Graphic (Leaflet.js style) -->
+            <div class="relative bg-surface border border-outline-variant rounded-24 overflow-hidden shadow-sm w-full h-[320px] sm:h-[400px]">
+              <div id="map" class="w-full h-full z-10"></div>
             </div>
           </section>
 
@@ -554,6 +548,83 @@
         <div class="flex flex-col sm:flex-row gap-md pt-lg">
           <button id="btn-modal-action-recommend" class="flex-1 bg-primary text-on-primary py-3 rounded-full font-bold hover:opacity-90 active:scale-95 transition-all">查看智慧推薦</button>
           <button id="btn-modal-close-fallback" class="flex-1 border border-outline text-on-surface py-3 rounded-full font-bold hover:bg-surface-container-high active:scale-95 transition-all">返回列表</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MAP NAVIGATION MODAL (Leaflet Map Popup) -->
+  <!-- ========================================== -->
+  <div class="hidden fixed inset-0 z-[100] flex items-center justify-center p-margin-mobile md:p-xl" id="map-modal">
+    <div class="absolute inset-0 bg-on-surface/40 backdrop-blur-md" id="map-modal-overlay"></div>
+    <div class="relative bg-surface w-full max-w-4xl max-h-[95vh] overflow-y-auto rounded-24 shadow-xl flex flex-col border border-outline-variant z-10">
+      
+      <!-- Close Button -->
+      <button class="absolute top-4 right-4 z-30 bg-white/80 dark:bg-black/50 hover:bg-white dark:hover:bg-black p-2 rounded-full text-on-surface dark:text-white transition-all active:scale-95 shadow-sm border border-outline-variant/30 flex items-center justify-center cursor-pointer" id="btn-close-map-modal">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+
+      <!-- Modal Header -->
+      <div class="p-4 sm:p-5 border-b border-outline-variant/30 bg-surface-container-low flex flex-col gap-1">
+        <h2 class="font-display text-base sm:text-headline-md font-bold text-primary flex items-center gap-2">
+          <span class="material-symbols-outlined text-primary">navigation</span>
+          校園路程導航
+        </h2>
+        <p class="text-xs text-on-surface-variant dark:text-outline font-semibold">
+          起點：<span id="map-modal-start-name" class="text-primary font-bold">--</span> ➔ 終點：<span id="map-modal-end-name" class="text-primary font-bold">--</span>
+        </p>
+      </div>
+
+      <!-- Map Display Area -->
+      <div class="relative w-full h-[320px] sm:h-[450px] bg-slate-100 overflow-hidden">
+        <div id="modal-map" class="w-full h-full z-10"></div>
+      </div>
+
+      <!-- Modal Bottom Info Panel -->
+      <div class="p-4 sm:p-5 space-y-3 bg-surface-container">
+        <!-- KPI Stats -->
+        <div class="grid grid-cols-3 gap-2 text-center">
+          <div class="bg-surface-bright p-2 rounded-xl border border-outline-variant/50">
+            <p class="text-[9px] text-on-surface-variant font-bold">步行時間</p>
+            <p id="modal-kpi-walk" class="text-xs sm:text-sm font-extrabold text-on-surface">--</p>
+          </div>
+          <div class="bg-surface-bright p-2 rounded-xl border border-outline-variant/50">
+            <p class="text-[9px] text-on-surface-variant font-bold">學餐等待</p>
+            <p id="modal-kpi-wait" class="text-xs sm:text-sm font-extrabold text-on-surface">--</p>
+          </div>
+          <div class="bg-primary/10 p-2 rounded-xl border border-primary/20">
+            <p class="text-[9px] text-primary font-bold">總預估時間</p>
+            <p id="modal-kpi-total" class="text-xs sm:text-sm font-extrabold text-primary">--</p>
+          </div>
+        </div>
+
+        <!-- Warning Alert Panel -->
+        <div id="modal-gps-warning" class="bg-amber-50 border border-amber-200 text-amber-800 p-2.5 rounded-xl text-xs font-semibold flex gap-2 items-start hidden">
+          <span class="material-symbols-outlined text-[16px] text-amber-600 mt-0.5">warning</span>
+          <span id="modal-gps-warning-text">您的位置超出校區 500 公尺，已自動切換起點為正校門。</span>
+        </div>
+
+        <!-- Navigation Steps -->
+        <div class="bg-surface-bright p-3 rounded-xl border border-outline-variant/40 flex flex-col gap-1.5">
+          <p class="text-xs font-bold text-on-surface flex items-center gap-1">
+            <span class="material-symbols-outlined text-[16px] text-primary">turn_right</span>
+            導航指引路徑
+          </p>
+          <div id="modal-route-steps" class="text-[11px] sm:text-xs font-medium text-on-surface-variant dark:text-outline flex flex-wrap items-center gap-1.5 leading-relaxed">
+            <!-- Populated dynamically -->
+          </div>
+        </div>
+
+        <!-- Action Bar -->
+        <div class="flex gap-3 pt-1">
+          <button id="btn-modal-simulate" class="flex-1 bg-primary text-on-primary py-3 rounded-full font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 hover:opacity-90 active:scale-95 transition-all shadow-md">
+            <span class="material-symbols-outlined text-[18px]">play_arrow</span>
+            模擬導航
+          </button>
+          <button id="btn-modal-close-map" class="flex-1 border border-outline text-on-surface bg-white/70 dark:bg-black/30 py-3 rounded-full font-bold text-xs sm:text-sm hover:bg-surface-container-high active:scale-95 transition-all">
+            關閉地圖
+          </button>
         </div>
       </div>
     </div>
