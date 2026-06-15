@@ -253,36 +253,6 @@
         </div>
       </section>
 
-      <!-- Quick Stats Banner (Compact padding & spacing) -->
-      <section class="grid grid-cols-1 md:grid-cols-3 gap-md">
-        <div class="bg-surface-container p-4 sm:p-lg rounded-24 flex flex-col items-center text-center md:flex-row md:text-left gap-sm md:gap-md border border-outline-variant/10 shadow-sm">
-          <div class="bg-white dark:bg-[#2d2d2d] p-2.5 rounded-xl mx-auto md:mx-0">
-            <span class="material-symbols-outlined text-primary">groups</span>
-          </div>
-          <div>
-            <p class="text-on-surface-variant text-[10px] sm:text-label-sm uppercase font-bold">目前校內用餐人數</p>
-            <p class="text-base sm:text-headline-md font-bold">1,284 <span class="text-xs font-normal opacity-60">人</span></p>
-          </div>
-        </div>
-        <div class="bg-surface-container p-4 sm:p-lg rounded-24 flex flex-col items-center text-center md:flex-row md:text-left gap-sm md:gap-md border border-outline-variant/10 shadow-sm">
-          <div class="bg-white dark:bg-[#2d2d2d] p-2.5 rounded-xl mx-auto md:mx-0">
-            <span class="material-symbols-outlined text-primary">timer</span>
-          </div>
-          <div>
-            <p class="text-on-surface-variant text-[10px] sm:text-label-sm uppercase font-bold">平均等待時間</p>
-            <p id="stats-avg-wait" class="text-base sm:text-headline-md font-bold">13 <span class="text-xs font-normal opacity-60">分鐘</span></p>
-          </div>
-        </div>
-        <div class="bg-surface-container p-4 sm:p-lg rounded-24 flex flex-col items-center text-center md:flex-row md:text-left gap-sm md:gap-md border border-outline-variant/10 shadow-sm">
-          <div class="bg-white dark:bg-[#2d2d2d] p-2.5 rounded-xl mx-auto md:mx-0">
-            <span class="material-symbols-outlined text-primary">analytics</span>
-          </div>
-          <div>
-            <p class="text-on-surface-variant text-[10px] sm:text-label-sm uppercase font-bold">系統建議達成率</p>
-            <p class="text-base sm:text-headline-md font-bold">92 <span class="text-xs font-normal opacity-60">%</span></p>
-          </div>
-        </div>
-      </section>
     </div>
 
     <!-- ========================================== -->
@@ -325,14 +295,7 @@
                 <label class="font-label-md text-label-md text-on-surface-variant px-xs font-bold">時間要求 (最久等待時間/分鐘)</label>
                 <input id="recommend-max-wait" class="bg-surface-container-low border-outline-variant focus:ring-primary focus:border-primary rounded-xl px-md py-sm font-body-md text-body-md font-bold" type="number" min="0" placeholder="例如：20 (選填)"/>
               </div>
-              <!-- 推薦模式 -->
-              <div class="flex flex-col gap-xs">
-                <label class="font-label-md text-label-md text-on-surface-variant px-xs font-bold">排序方式</label>
-                <div class="flex flex-wrap gap-xs" id="sort-modes-container">
-                  <button id="btn-sort-total" class="px-md py-xs pill-radius font-label-sm text-label-sm border border-primary text-primary bg-primary-fixed-dim/20 font-bold" type="button" data-mode="total">總耗時最短</button>
-                  <button id="btn-sort-wait" class="px-md py-xs pill-radius font-label-sm text-label-sm border border-outline-variant text-on-surface-variant font-bold" type="button" data-mode="wait">排隊最快</button>
-                </div>
-              </div>
+
               <!-- 開始智慧推薦按鈕 -->
               <button id="btn-recommend-submit" class="mt-base bg-primary text-on-primary w-full py-md pill-radius font-label-md text-label-md flex items-center justify-center gap-sm hover:opacity-90 active:scale-95 transition-all shadow-md font-bold" type="button">
                 <span class="material-symbols-outlined text-[20px]">psychology</span> 開始智慧推薦
@@ -370,7 +333,7 @@
         <!-- Recommendation Results (8 Cols) -->
         <div class="lg:col-span-8 flex flex-col gap-gutter" id="recommend-results-panel">
           <!-- Best Choice (Featured) -->
-          <div id="featured-choice-container" class="group bg-surface-container-lowest card-radius border-2 border-primary overflow-hidden custom-shadow relative transition-all hover:translate-y-[-4px] hidden">
+          <div id="featured-choice-container" class="group bg-surface-container-lowest card-radius border-2 border-primary overflow-hidden custom-shadow relative transition-all hover:translate-y-[-4px] cursor-pointer hidden">
             <div class="h-48 relative overflow-hidden">
               <img id="featured-img" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" src=""/>
               <div class="absolute top-md left-1/2 -translate-x-1/2 md:left-md md:translate-x-0 bg-primary text-on-primary px-md py-xs pill-radius font-label-md shadow-lg flex items-center gap-xs font-bold whitespace-nowrap">
@@ -545,39 +508,7 @@
 
   </main>
 
-  <!-- Footer -->
-  <footer class="bg-surface-container-low dark:bg-surface-container-highest border-t border-outline-variant mt-xl">
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-md px-margin-desktop py-lg max-w-[1280px] mx-auto text-xs sm:text-sm">
-      <div class="flex flex-col gap-sm">
-        <span class="font-headline-md text-headline-md text-primary font-extrabold tracking-tight">CampusBistro</span>
-        <p class="font-body-md text-body-md text-on-surface-variant">讓校園生活更智慧，讓每一餐都值得期待。融合最短路徑與即時數據分析。</p>
-      </div>
-      <div class="flex flex-col gap-sm">
-        <h5 class="font-label-md text-label-md text-on-surface font-bold">快速連結</h5>
-        <nav class="flex flex-col gap-xs font-semibold">
-          <a class="text-on-surface-variant hover:text-primary transition-colors" href="#">關於我們</a>
-          <a class="text-on-surface-variant hover:text-primary transition-colors" href="#">支援服務</a>
-        </nav>
-      </div>
-      <div class="flex flex-col gap-sm">
-        <h5 class="font-label-md text-label-md text-on-surface font-bold">法律條款</h5>
-        <nav class="flex flex-col gap-xs font-semibold">
-          <a class="text-on-surface-variant hover:text-primary transition-colors" href="#">隱私權政策</a>
-          <a class="text-on-surface-variant hover:text-primary transition-colors" href="#">服務條款</a>
-        </nav>
-      </div>
-      <div class="flex flex-col gap-sm">
-        <h5 class="font-label-md text-label-md text-on-surface font-bold">關注我們</h5>
-        <div class="flex gap-sm">
-          <span class="material-symbols-outlined text-primary cursor-pointer hover:opacity-70">language</span>
-          <span class="material-symbols-outlined text-primary cursor-pointer hover:opacity-70">share</span>
-        </div>
-      </div>
-    </div>
-    <div class="px-margin-desktop py-md border-t border-outline-variant/30 text-center text-xs text-on-surface-variant font-semibold font-bold">
-      <p>© 2026 CampusBistro Smart Decision Systems. 版權所有。</p>
-    </div>
-  </footer>
+
 
   <!-- ========================================== -->
   <!-- STORE DETAIL MODAL (campusbistro_modal) -->
@@ -595,7 +526,7 @@
         </div>
       </div>
       <div class="p-lg md:p-xl space-y-lg">
-        <div class="grid grid-cols-3 gap-md">
+        <div class="grid grid-cols-2 gap-md">
           <div class="bg-surface-container p-md rounded-xl text-center border border-outline-variant/20">
             <p class="text-on-surface-variant font-label-sm uppercase font-bold mb-1">等待時間</p>
             <p class="text-headline-md font-bold text-primary" id="modal-wait"></p>
@@ -604,14 +535,10 @@
             <p class="text-on-surface-variant font-label-sm uppercase font-bold mb-1">排隊人數</p>
             <p class="text-headline-md font-bold text-primary" id="modal-queue"></p>
           </div>
-          <div class="bg-surface-container p-md rounded-xl text-center border border-outline-variant/20">
-            <p class="text-on-surface-variant font-label-sm uppercase font-bold mb-1">製作速度</p>
-            <p class="text-headline-md font-bold text-primary" id="modal-speed"></p>
-          </div>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-xl">
           <div class="space-y-md">
-            <h3 class="font-headline-md text-primary border-b border-outline-variant pb-2 font-bold">熱門精選餐點</h3>
+            <h3 id="modal-menu-title" class="font-headline-md text-primary border-b border-outline-variant pb-2 font-bold">熱門精選餐點</h3>
             <ul class="space-y-sm" id="modal-menu"></ul>
           </div>
           <div class="space-y-md">

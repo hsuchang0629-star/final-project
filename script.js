@@ -5,6 +5,24 @@
 document.addEventListener("DOMContentLoaded", () => {
   // 1. Data Initialization
   const restaurants = window.restaurantData || [];
+  
+  // Dynamic wait time calculation using formulas
+  function calculateWaitTimes() {
+    restaurants.forEach(r => {
+      if (r.name === "麗宴精緻自助餐") {
+        // 自助餐專用公式: ((1 * 2 + (最少等待人數 - 1) * 0.33) + (1 * 2 + (最多等待人數 - 1) * 0.33)) / 2
+        const minWait = r.minQueue > 0 ? (1 * 2 + (r.minQueue - 1) * 0.33) : 0;
+        const maxWait = r.maxQueue > 0 ? (1 * 2 + (r.maxQueue - 1) * 0.33) : 0;
+        r.waitTime = Math.round((minWait + maxWait) / 2);
+      } else {
+        // 其餘學餐統一公式: ((最少等待人數 * 一份餐點製作時間) + (最多等待人數 * 一份餐點製作時間)) / 2
+        const speed = r.speedPerPerson || 2;
+        r.waitTime = Math.round(((r.minQueue * speed) + (r.maxQueue * speed)) / 2);
+      }
+    });
+  }
+  calculateWaitTimes();
+
   const graph = window.campusGraph || { nodes: [], adjacencyList: {} };
   const defaultStartBuilding = "第一教學大樓";
 
@@ -50,7 +68,7 @@ document.addEventListener("DOMContentLoaded", () => {
       img: "https://images.unsplash.com/photo-1626132647523-66f5bf380027?auto=format&fit=crop&w=600&q=80",
       queue: "3 人",
       speed: "2 分/人",
-      menu: ["九層塔起司蛋抓餅 ($55)", "招牌蛋抓餅 ($45)", "玉米起司抓餅 ($60)"],
+      menu: ["九層塔蛋蔥抓餅 ($45)", "抓餅加蛋+咔啦雞腿+飲料套餐 ($90)", "抓餅加蛋+起司+飲料套餐 ($65)"],
       aiStatus: "🟢 最推薦",
       aiText: "總耗時最低，排隊人潮極少，製作速度快，非常適合趕時間的學生。",
       aiClass: "bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-900/30"
@@ -59,7 +77,7 @@ document.addEventListener("DOMContentLoaded", () => {
       img: "https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?auto=format&fit=crop&w=600&q=80",
       queue: "5 人",
       speed: "3 分/人",
-      menu: ["招牌飯捲 ($75)", "辣炒年糕 ($60)", "韓式乾拌麵 ($80)"],
+      menu: ["招牌燒肉飯捲 ($75)", "濃郁起司辣炒年糕 ($100)", "泡菜起司雞排飯捲 ($75)"],
       aiStatus: "🟢 推薦",
       aiText: "人潮中等，韓式年糕與飯捲深受喜愛，製作速度穩定，是美味與效率兼具的選擇。",
       aiClass: "bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-900/30"
@@ -68,7 +86,7 @@ document.addEventListener("DOMContentLoaded", () => {
       img: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=600&q=80",
       queue: "8 人",
       speed: "3 分/人",
-      menu: ["招牌雙拼便當 ($85)", "香炸大雞腿便當 ($95)", "精緻素食便當 ($80)"],
+      menu: ["高麗菜", "櫛瓜", "炸湯圓", "炸地瓜", "糖醋排骨"],
       aiStatus: "🟡 普通",
       aiText: "人流較為穩定，菜色極其豐富，但結帳口秤重可能需稍作等候。",
       aiClass: "bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-900/30"
@@ -77,18 +95,18 @@ document.addEventListener("DOMContentLoaded", () => {
       img: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=80",
       queue: "12 人",
       speed: "4 分/人",
-      menu: ["藜麥燒肉珍珠堡 ($105)", "摩斯鱈魚堡 ($85)", "黃金薯條 ($45)"],
+      menu: ["藜麥燒肉珍珠堡 ($115)", "摩斯吉士漢堡 ($95)", "經典摩斯紅茶 ($45)"],
       aiStatus: "🔴 擁擠",
       aiText: "現點現做加上時段熱門，排隊與取餐時間較長，若時間緊迫建議避開高峰期。",
       aiClass: "bg-red-50 text-red-700 border border-red-200 dark:bg-red-950/20 dark:text-red-400 dark:border-red-900/30"
     },
-    "泰式風味料理": {
+    "宣坊": {
       img: "https://images.unsplash.com/photo-1559314809-0d155014e29e?auto=format&fit=crop&w=600&q=80",
       queue: "4 人",
       speed: "3 分/人",
-      menu: ["泰式椒麻雞飯 ($95)", "椰汁綠咖哩雞飯 ($90)", "打拋豬肉飯 ($85)"],
+      menu: ["泰式椒麻雞飯 ($120)", "泰式打拋豬肉飯 ($90)", "越式牛肉河粉 ($100)"],
       aiStatus: "🟢 推薦",
-      aiText: "酸辣開胃的泰式特色料理，椒麻雞外酥內嫩，製作時間大約 12 分鐘，是喜愛泰式風味的首選。",
+      aiText: "酸辣開胃的泰式與越式特色料理，椒麻雞外酥內嫩，打拋豬香辣過癮，是喜愛東南亞風味的首選。",
       aiClass: "bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-900/30"
     }
   };
@@ -134,8 +152,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const recommendTimeInput = document.getElementById("recommend-current-time");
   const recommendCategorySelect = document.getElementById("recommend-category");
   const recommendMaxWaitInput = document.getElementById("recommend-max-wait");
-  const btnSortTotal = document.getElementById("btn-sort-total");
-  const btnSortWait = document.getElementById("btn-sort-wait");
+
   const btnRecommendSubmit = document.getElementById("btn-recommend-submit");
 
   // Tab 2: Report Card
@@ -192,7 +209,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const modalTitle = document.getElementById("modal-title");
   const modalWait = document.getElementById("modal-wait");
   const modalQueue = document.getElementById("modal-queue");
-  const modalSpeed = document.getElementById("modal-speed");
+
   const modalMenu = document.getElementById("modal-menu");
   const modalAiReport = document.getElementById("modal-ai-report");
 
@@ -492,11 +509,22 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Dashboard Refresh Button
   btnDashboardRefresh.addEventListener("click", () => {
-    // Randomize wait times slightly
+    // Randomize queue lengths slightly
     restaurants.forEach(r => {
-      const delta = Math.floor(Math.random() * 5) - 2; // -2 to +2
-      r.waitTime = Math.max(2, Math.min(30, r.waitTime + delta));
+      const qDeltaMin = Math.floor(Math.random() * 5) - 2; // -2 to +2
+      const qDeltaMax = Math.floor(Math.random() * 5) - 2; // -2 to +2
+      
+      if (r.name === "麗宴精緻自助餐") {
+        r.minQueue = Math.max(5, Math.min(50, r.minQueue + qDeltaMin));
+        r.maxQueue = Math.max(r.minQueue + 5, Math.min(80, r.maxQueue + qDeltaMax));
+      } else {
+        r.minQueue = Math.max(1, Math.min(15, r.minQueue + qDeltaMin));
+        r.maxQueue = Math.max(r.minQueue + 1, Math.min(25, r.maxQueue + qDeltaMax));
+      }
     });
+
+    // Recalculate wait times using the formula
+    calculateWaitTimes();
 
     // Animate refresh rotation
     const refreshIcon = btnDashboardRefresh.querySelector(".material-symbols-outlined");
@@ -517,20 +545,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // 8. Tab 2: 決策規劃 (智慧推薦) Calculations
   // ==========================================
   
-  // Sort modes toggling
-  btnSortTotal.addEventListener("click", () => {
-    activeSortMode = "total";
-    btnSortTotal.className = "px-md py-xs pill-radius font-label-sm text-label-sm border border-primary text-primary bg-primary-fixed-dim/20 font-bold";
-    btnSortWait.className = "px-md py-xs pill-radius font-label-sm text-label-sm border border-outline-variant text-on-surface-variant font-bold";
-    calculateSmartRecommendations();
-  });
 
-  btnSortWait.addEventListener("click", () => {
-    activeSortMode = "wait";
-    btnSortWait.className = "px-md py-xs pill-radius font-label-sm text-label-sm border border-primary text-primary bg-primary-fixed-dim/20 font-bold";
-    btnSortTotal.className = "px-md py-xs pill-radius font-label-sm text-label-sm border border-outline-variant text-on-surface-variant font-bold";
-    calculateSmartRecommendations();
-  });
 
   function calculateSmartRecommendations() {
     const endPreference = recommendCategorySelect.value;
@@ -590,6 +605,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // 1. Featured Choice (Winner #1)
     const featured = candidates[0];
     featuredChoiceContainer.classList.remove("hidden");
+    featuredChoiceContainer.onclick = () => openStoreModal(featured.name);
     
     // Set banner image
     const featuredConfig = storeDetailsConfig[featured.name] || {};
@@ -756,7 +772,7 @@ document.addEventListener("DOMContentLoaded", () => {
       "共同科館",
       "圖書館"
     ];
-    const canteens = ["麗宴精緻自助餐", "喜歡你飯捲年糕", "天津蔥抓餅", "摩斯漢堡", "泰式風味料理"];
+    const canteens = ["麗宴精緻自助餐", "喜歡你飯捲年糕", "天津蔥抓餅", "摩斯漢堡", "宣坊"];
 
     buildings.forEach(b => {
       const opt = document.createElement("option");
@@ -1115,21 +1131,38 @@ document.addEventListener("DOMContentLoaded", () => {
     modalTitle.textContent = storeName;
     modalImg.src = details.img;
     modalWait.textContent = canteen.waitTime + " 分鐘";
-    modalQueue.textContent = details.queue;
-    modalSpeed.textContent = details.speed;
+    modalQueue.textContent = `${canteen.minQueue} ~ ${canteen.maxQueue} 人`;
+
 
     // Populates menu dishes
-    modalMenu.innerHTML = details.menu.map(dish => {
-      const parts = dish.split(" ($");
-      const name = parts[0];
-      const price = parts[1] ? "$" + parts[1].replace(")", "") : "";
-      return `
+    const modalMenuTitle = document.getElementById("modal-menu-title");
+    if (modalMenuTitle) {
+      modalMenuTitle.textContent = canteen.name === "麗宴精緻自助餐" ? "推薦菜色" : "熱門精選餐點";
+    }
+
+    if (canteen.name === "麗宴精緻自助餐") {
+      const buffetDishes = ["高麗菜", "櫛瓜", "炸湯圓", "炸地瓜", "糖醋排骨"];
+      // Randomly select 3 dishes
+      const selectedDishes = buffetDishes.sort(() => 0.5 - Math.random()).slice(0, 3);
+      modalMenu.innerHTML = selectedDishes.map(dish => `
         <li class="flex justify-between items-center p-2 bg-surface-container-low dark:bg-[#3d3d3d] rounded-lg font-bold text-sm text-[#1c1c1a] dark:text-[#fcf9f5] border border-outline-variant/10">
-          <span>${name}</span>
-          <span class="text-primary dark:text-[#fecb9b]">${price}</span>
+          <span>${dish}</span>
+          <span class="text-primary dark:text-[#fecb9b]">今日推薦</span>
         </li>
-      `;
-    }).join("");
+      `).join("");
+    } else {
+      modalMenu.innerHTML = details.menu.map(dish => {
+        const parts = dish.split(" ($");
+        const name = parts[0];
+        const price = parts[1] ? "$" + parts[1].replace(")", "") : "";
+        return `
+          <li class="flex justify-between items-center p-2 bg-surface-container-low dark:bg-[#3d3d3d] rounded-lg font-bold text-sm text-[#1c1c1a] dark:text-[#fcf9f5] border border-outline-variant/10">
+            <span>${name}</span>
+            <span class="text-primary dark:text-[#fecb9b]">${price}</span>
+          </li>
+        `;
+      }).join("");
+    }
 
     // AI report card classes
     modalAiReport.className = `p-md rounded-xl ${details.aiClass}`;
