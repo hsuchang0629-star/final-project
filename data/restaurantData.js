@@ -3,57 +3,71 @@ const restaurantData = [
   {
     id: "r1",
     name: "麗宴精緻自助餐",
-    type: "便當",
-    waitTime: 15, // 分鐘
-    popularFood: "招牌雙拼便當",
+    type: "自助餐",
+    waitTime: 15, // 分鐘 (將由公式動態計算，預設對接設計圖為 15 分鐘)
+    popularFood: "糖醋排骨",
     averagePrice: 85,
     description: "菜色豐富、經濟實惠的精緻自助餐，是午餐時段熱門的家常菜選擇。",
-    lat: 25.04406888456704,
-    lng: 121.53342716224758
+    lat: 25.04357,
+    lng: 121.53237, // 位於光華館
+    minQueue: 10,
+    maxQueue: 20
   },
   {
     id: "r2",
     name: "喜歡你飯捲年糕",
-    type: "點心",
+    type: "韓式料理",
     waitTime: 12, // 分鐘
-    popularFood: "招牌飯捲與辣炒年糕",
+    popularFood: "招牌燒肉飯捲",
     averagePrice: 75,
     description: "特色韓式乾拌麵與精緻飯捲，味道獨特，深受學生喜愛。",
-    lat: 25.04406888456704,
-    lng: 121.53342716224758
+    lat: 25.04357,
+    lng: 121.53237, // 位於光華館
+    minQueue: 4,
+    maxQueue: 8,
+    speedPerPerson: 2.0
   },
   {
     id: "r3",
     name: "天津蔥抓餅",
-    type: "點心",
+    type: "中式輕食",
     waitTime: 5, // 分鐘
     popularFood: "九層塔起司蛋抓餅",
     averagePrice: 55,
     description: "外皮酥脆、內層蓬鬆，搭配九層塔香氣十足，適合快速解決一餐。",
-    lat: 25.04406888456704,
-    lng: 121.53342716224758
+    lat: 25.04357,
+    lng: 121.53237, // 位於光華館
+    minQueue: 2,
+    maxQueue: 4,
+    speedPerPerson: 1.67
   },
   {
     id: "r4",
     name: "摩斯漢堡",
-    type: "速食",
+    type: "速食連鎖",
     waitTime: 20, // 分鐘
     popularFood: "藜麥燒肉珍珠堡",
     averagePrice: 105,
     description: "日式連鎖漢堡，米漢堡現點現做，品質穩定，提供舒適的用餐環境。",
-    lat: 25.04406888456704,
-    lng: 121.53342716224758
+    lat: 25.04357,
+    lng: 121.53237, // 位於光華館
+    minQueue: 8,
+    maxQueue: 16,
+    speedPerPerson: 1.67
   },
   {
     id: "r5",
-    name: "泰式風味料理",
-    type: "便當",
-    waitTime: 12, // 分鐘
+    name: "宣坊泰式料理",
+    type: "泰式料理",
+    waitTime: 25, // 分鐘
     popularFood: "泰式椒麻雞飯",
     averagePrice: 95,
     description: "酸辣開胃的泰式特色料理，椒麻雞外酥內嫩，搭配特調醬汁，是人氣熱門選擇。",
-    lat: 25.04406888456704,
-    lng: 121.53342716224758
+    lat: 25.04357,
+    lng: 121.53237, // 位於光華館
+    minQueue: 14,
+    maxQueue: 22,
+    speedPerPerson: 1.39
   }
 ];
 
