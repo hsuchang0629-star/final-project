@@ -475,9 +475,6 @@
                 路線導航資訊
               </h2>
             </div>
-            <div id="route-path-steps" class="flex flex-wrap items-center gap-3 mb-lg text-on-surface-variant font-label-md font-bold">
-              <span>(請先選擇起訖點並開始規劃)</span>
-            </div>
             <!-- Campus Map Graphic (Leaflet.js style) -->
             <div class="relative bg-surface border border-outline-variant rounded-24 overflow-hidden shadow-sm w-full h-[320px] sm:h-[400px]">
               <div id="map" class="w-full h-full z-10"></div>
@@ -605,16 +602,7 @@
           <span id="modal-gps-warning-text">您的位置超出校區 500 公尺，已自動切換起點為正校門。</span>
         </div>
 
-        <!-- Navigation Steps -->
-        <div class="bg-surface-bright p-3 rounded-xl border border-outline-variant/40 flex flex-col gap-1.5">
-          <p class="text-xs font-bold text-on-surface flex items-center gap-1">
-            <span class="material-symbols-outlined text-[16px] text-primary">turn_right</span>
-            導航指引路徑
-          </p>
-          <div id="modal-route-steps" class="text-[11px] sm:text-xs font-medium text-on-surface-variant dark:text-outline flex flex-wrap items-center gap-1.5 leading-relaxed">
-            <!-- Populated dynamically -->
-          </div>
-        </div>
+
 
         <!-- Action Bar -->
         <div class="flex gap-3 pt-1">
@@ -631,9 +619,9 @@
   </div>
 
   <!-- Mock Data Scripts -->
-  <script src="data/restaurantData.js"></script>
-  <script src="data/campusGraph.js"></script>
+  <script src="data/restaurantData.js?v=1.0.5"></script>
+  <script src="data/campusGraph.js?v=1.0.5"></script>
   <!-- Core Logic Script -->
-  <script src="script.js"></script>
+  <script src="script.js?v=1.0.5"></script>
 </body>
 </html>
