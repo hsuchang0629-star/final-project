@@ -54,6 +54,97 @@ document.addEventListener("DOMContentLoaded", () => {
     };
   }
 
+  function getTaipeiDateTime() {
+    const now = new Date();
+    try {
+      const formatter = new Intl.DateTimeFormat("en-US", {
+        timeZone: "Asia/Taipei",
+        hour: "numeric",
+        minute: "numeric",
+        second: "numeric",
+        weekday: "short",
+        hour12: false
+      });
+      const parts = formatter.formatToParts(now);
+      let hour = "", minute = "", second = "", weekday = "";
+      for (const part of parts) {
+        if (part.type === "hour") hour = part.value;
+        if (part.type === "minute") minute = part.value;
+        if (part.type === "second") second = part.value;
+        if (part.type === "weekday") weekday = part.value;
+      }
+      
+      let hh = parseInt(hour, 10);
+      let mm = parseInt(minute, 10);
+      let ss = parseInt(second, 10);
+      
+      if (!isNaN(hh) && !isNaN(mm) && !isNaN(ss)) {
+        if (hh === 24) hh = 0;
+        const dayMap = { "Sun": 0, "Mon": 1, "Tue": 2, "Wed": 3, "Thu": 4, "Fri": 5, "Sat": 6 };
+        const day = dayMap[weekday] !== undefined ? dayMap[weekday] : now.getDay();
+        return { day, hour: hh, minute: mm, second: ss };
+      }
+    } catch (e) {
+      console.error("Intl Taipei date-time error, fallback to manual offset:", e);
+    }
+
+    const utcOffset = now.getTimezoneOffset() * 60000;
+    const utcTime = now.getTime() + utcOffset;
+    const taipeiDate = new Date(utcTime + (3600000 * 8));
+    return {
+      day: taipeiDate.getDay(),
+      hour: taipeiDate.getHours(),
+      minute: taipeiDate.getMinutes(),
+      second: taipeiDate.getSeconds()
+    };
+  }
+
+  function isRestaurantOpen(name, day, hour, minute) {
+    const mins = hour * 60 + minute;
+    
+    if (name === "宣坊泰式料理") {
+      if (day >= 1 && day <= 6) { // Mon - Sat
+        return mins >= 630 && mins <= 1170; // 10:30 - 19:30
+      } else if (day === 0) { // Sun
+        return mins >= 630 && mins <= 930; // 10:30 - 15:30
+      }
+    }
+    
+    if (name === "摩斯漢堡") {
+      if (day >= 1 && day <= 5) { // Mon - Fri
+        return mins >= 450 && mins <= 1170; // 07:30 - 19:30
+      } else { // Sat, Sun
+        return mins >= 480 && mins <= 1140; // 08:00 - 19:00
+      }
+    }
+    
+    if (name === "麗宴精緻自助餐") {
+      if (day >= 1 && day <= 5) { // Mon - Fri
+        return (mins >= 660 && mins <= 810) || (mins >= 990 && mins <= 1160); // 11:00-13:30 or 16:30-19:20
+      } else { // Sat, Sun
+        return false; // Closed
+      }
+    }
+    
+    if (name === "天津蔥抓餅") {
+      if (day >= 1 && day <= 5) { // Mon - Fri
+        return mins >= 480 && mins <= 1140; // 08:00 - 19:00
+      } else { // Sat, Sun
+        return false; // Closed
+      }
+    }
+    
+    if (name === "喜歡你飯捲年糕") {
+      if (day >= 1 && day <= 5) { // Mon - Fri
+        return mins >= 600 && mins <= 1140; // 10:00 - 19:00
+      } else { // Sat, Sun
+        return false; // Closed
+      }
+    }
+    
+    return true; // Default fallback
+  }
+
   // Dynamic wait time calculation using formulas with static backup to prevent NaN
   function calculateWaitTimes() {
     // 預設與截圖完全符合的排隊參數對照表
@@ -527,31 +618,67 @@ document.addEventListener("DOMContentLoaded", () => {
   function renderDashboardGrid() {
     dashboardGrid.innerHTML = "";
     let renderList = [...restaurants];
+    const timeData = getTaipeiDateTime();
 
-    // 依據下拉選單排序
+    // 依據營業狀態與下拉選單排序 (非營業時段永遠排在最後)
     const dashboardSortMode = selectDashboardSort.value;
-    if (dashboardSortMode === "wait-asc") {
-      renderList.sort((a, b) => a.waitTime - b.waitTime);
-    } else if (dashboardSortMode === "wait-desc") {
-      renderList.sort((a, b) => b.waitTime - a.waitTime);
-    }
+    renderList.sort((a, b) => {
+      const aOpen = isRestaurantOpen(a.name, timeData.day, timeData.hour, timeData.minute);
+      const bOpen = isRestaurantOpen(b.name, timeData.day, timeData.hour, timeData.minute);
+      
+      if (aOpen && !bOpen) return -1;
+      if (!aOpen && bOpen) return 1;
+      
+      if (dashboardSortMode === "wait-asc") {
+        return a.waitTime - b.waitTime;
+      } else if (dashboardSortMode === "wait-desc") {
+        return b.waitTime - a.waitTime;
+      }
+      return 0;
+    });
 
     renderList.forEach(r => {
-      // 根據等待時間判斷文字顏色 (綠、黃、紅)
-      let waitColor = "text-emerald-500 dark:text-emerald-400";
-      if (r.waitTime > 10 && r.waitTime <= 18) {
-        waitColor = "text-amber-500 dark:text-amber-400";
-      } else if (r.waitTime > 18) {
-        waitColor = "text-red-500 dark:text-red-400";
-      }
-
-      // 當前排隊人數
-      const currentQueue = Math.round((r.minQueue + r.maxQueue) / 2);
+      const isOpen = isRestaurantOpen(r.name, timeData.day, timeData.hour, timeData.minute);
       const storeConfig = storeDetailsConfig[r.name] || { img: "data/cafeteria.png" };
 
       // 生成改版卡片 DOM
       const card = document.createElement("div");
       card.className = "bg-surface-container-lowest rounded-24 overflow-hidden shadow-[0px_4px_16px_rgba(121,84,46,0.04)] hover:shadow-[0px_10px_30px_rgba(121,84,46,0.08)] border border-outline-variant/30 group hover:-translate-y-1 transition-all duration-300 cursor-pointer flex flex-col justify-between h-[280px]";
+      
+      let bottomContent = "";
+      if (!isOpen) {
+        // 非營業時段樣式：不顯示等待時間和人數，顯示「目前非營業時段」
+        bottomContent = `
+          <div class="pt-3 border-t border-outline-variant/20 flex justify-center items-center w-full">
+            <span class="text-sm font-extrabold text-red-500 dark:text-red-400 flex items-center gap-1">
+              <span class="material-symbols-outlined text-[18px]">block</span>目前非營業時段
+            </span>
+          </div>
+        `;
+      } else {
+        // 營業時段樣式：顯示等待時間和人數
+        let waitColor = "text-emerald-500 dark:text-emerald-400";
+        if (r.waitTime > 10 && r.waitTime <= 18) {
+          waitColor = "text-amber-500 dark:text-amber-400";
+        } else if (r.waitTime > 18) {
+          waitColor = "text-red-500 dark:text-red-400";
+        }
+        const currentQueue = Math.round((r.minQueue + r.maxQueue) / 2);
+        
+        bottomContent = `
+          <div class="pt-3 border-t border-outline-variant/20 flex justify-between items-center w-full">
+            <!-- 時間：綠/黃/紅動態對照 -->
+            <span class="text-sm font-extrabold ${waitColor} flex items-center gap-1">
+              <span class="material-symbols-outlined text-[18px]">schedule</span>${r.waitTime}m
+            </span>
+            <!-- 人數 -->
+            <span class="text-sm font-bold text-on-surface-variant flex items-center gap-1">
+              <span class="material-symbols-outlined text-[18px]">group</span>${currentQueue}人
+            </span>
+          </div>
+        `;
+      }
+
       card.innerHTML = `
         <!-- 上方圖片區 -->
         <div class="relative h-36 w-full overflow-hidden shrink-0">
@@ -569,18 +696,7 @@ document.addEventListener("DOMContentLoaded", () => {
           <div>
             <h4 class="text-base text-on-surface dark:text-[#fcf9f5] font-extrabold group-hover:text-primary transition-colors line-clamp-1">${r.name}</h4>
           </div>
-          
-          <!-- 底部只顯示時間和人數，完全拿掉狀態標籤 -->
-          <div class="pt-3 border-t border-outline-variant/20 flex justify-between items-center w-full">
-            <!-- 時間：綠/黃/紅動態對照 -->
-            <span class="text-sm font-extrabold ${waitColor} flex items-center gap-1">
-              <span class="material-symbols-outlined text-[18px]">schedule</span>${r.waitTime}m
-            </span>
-            <!-- 人數 -->
-            <span class="text-sm font-bold text-on-surface-variant flex items-center gap-1">
-              <span class="material-symbols-outlined text-[18px]">group</span>${currentQueue}人
-            </span>
-          </div>
+          ${bottomContent}
         </div>
       `;
       
