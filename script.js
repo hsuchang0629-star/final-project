@@ -15,6 +15,37 @@ document.addEventListener("DOMContentLoaded", () => {
     "速食連鎖": "速食"
   };
 
+  const googleMapsWalkTimes = {
+    "第一教學大樓": 1,
+    "第二教學大樓": 2,
+    "第三教學大樓": 3,
+    "第四教學大樓": 3,
+    "第六教學大樓": 1,
+    "設計館": 3,
+    "材資館": 3,
+    "土木館": 2,
+    "化學工程館": 2,
+    "分子科學工程館": 2,
+    "共同科館": 4,
+    "綜合科館": 5,
+    "圖書館": 3,
+    "行政大樓": 4,
+    "藝文中心": 4,
+    "紅樓": 2,
+    "先鋒國際研發大樓": 5,
+    "億光大樓": 10,
+    "新生校門": 1,
+    "新生側門": 3,
+    "正校門": 5,
+    "建國側門": 6,
+    "東校區建國側門": 7,
+    "國父百年紀念館": 1,
+    "光華館": 1,
+    "宏裕科技研究大樓": 1,
+    "校友會館": 2,
+    "校史館": 3
+  };
+
   // ==========================================
   // 強制內建真實世界經緯度校園網路資料庫 (真實座標)
   // 【修正後的學餐光華館經緯度】：已將「學生餐廳」精確設定在光華館內部偏右下紅點位置：lat: 25.04425, lng: 121.53275
@@ -449,8 +480,44 @@ document.addEventListener("DOMContentLoaded", () => {
     const periodData = isPeak ? dayData.peak : dayData.offPeak;
     const canteenData = periodData[canteenName] || defaultForecast;
 
-    const minQueue = canteenData.minQueue;
-    const maxQueue = canteenData.maxQueue;
+    // 1. Calculate macro time-of-day factor (f_time)
+    let f_time = 0.1; // Default fallback for off-meal hours
+    
+    if (timeInMinutes >= 660 && timeInMinutes <= 840) {
+      // Lunch window: 11:00 (660) to 14:00 (840)
+      if (timeInMinutes < 720) {
+        // 11:00 - 12:00: linear ramp up from 0.1 to 1.0
+        f_time = 0.1 + 0.9 * ((timeInMinutes - 660) / 60);
+      } else if (timeInMinutes <= 780) {
+        // 12:00 - 13:00: lunch peak
+        f_time = 1.0;
+      } else {
+        // 13:00 - 14:00: linear ramp down from 1.0 to 0.1
+        f_time = 0.1 + 0.9 * ((840 - timeInMinutes) / 60);
+      }
+    } else if (timeInMinutes >= 1020 && timeInMinutes <= 1170) {
+      // Dinner window: 17:00 (1020) to 19:30 (1170)
+      if (timeInMinutes < 1080) {
+        // 17:00 - 18:00: ramp up from 0.1 to 0.8
+        f_time = 0.1 + 0.7 * ((timeInMinutes - 1020) / 60);
+      } else if (timeInMinutes <= 1125) {
+        // 18:00 - 18:45: dinner peak
+        f_time = 0.8;
+      } else {
+        // 18:45 - 19:30: ramp down from 0.8 to 0.1
+        f_time = 0.1 + 0.7 * ((1170 - timeInMinutes) / 45);
+      }
+    }
+    
+    // 2. Calculate micro fluctuation factor (f_micro)
+    // Use a sine wave with a 10-minute period for fast-changing but smooth fluctuations
+    const f_micro = 0.15 * Math.sin(timeInMinutes * Math.PI / 5);
+    
+    // 3. Combine and clamp factor
+    let f_total = Math.max(0.05, Math.min(1.2, f_time + f_micro));
+
+    const minQueue = Math.max(0, Math.round(canteenData.minQueue * f_total));
+    const maxQueue = Math.max(minQueue, Math.round(canteenData.maxQueue * f_total));
     const minCook = canteenData.minCook || 2;
     const maxCook = canteenData.maxCook || 2;
     const buyTime = canteenData.buyTime || 2;
@@ -469,8 +536,66 @@ document.addEventListener("DOMContentLoaded", () => {
     return {
       minQueue,
       maxQueue,
-      waitTime: isNaN(waitTime) ? 10 : waitTime
+      waitTime: isNaN(waitTime) ? 10 : Math.max(1, waitTime)
     };
+  }
+
+  function getDynamicAiReport(storeName, waitTime) {
+    let aiStatus = "";
+    let aiText = "";
+    let aiClass = "";
+    
+    if (waitTime <= 10) {
+      aiStatus = "🟢 人潮少";
+      aiClass = "bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-900/30";
+      if (storeName === "麗宴精緻自助餐") {
+        aiText = `目前自助餐結帳與夾菜人流順暢，預估等待僅 ${waitTime} 分鐘，是極佳的用餐選擇。`;
+      } else if (storeName === "喜歡你飯捲年糕") {
+        aiText = `飯捲製作快速且隊伍長度極短，預估等候時間僅 ${waitTime} 分鐘，推薦立即購買。`;
+      } else if (storeName === "天津蔥抓餅") {
+        aiText = `排隊人數極少，製餐快速，目前只需等候大約 ${waitTime} 分鐘即可享用酥脆抓餅。`;
+      } else if (storeName === "摩斯漢堡") {
+        aiText = `目前點餐人潮少，預估僅需 ${waitTime} 分鐘即可領餐，適合快速解決一餐。`;
+      } else if (storeName === "宣坊泰式料理") {
+        aiText = `泰式料理目前出餐順暢，排隊人潮已消散，預估等待僅 ${waitTime} 分鐘。`;
+      } else {
+        aiText = `目前人潮較少，製餐迅速，預估等待僅 ${waitTime} 分鐘即可用餐。`;
+      }
+    } else if (waitTime <= 18) {
+      aiStatus = "🟡 人潮普通";
+      aiClass = "bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-900/30";
+      if (storeName === "麗宴精緻自助餐") {
+        aiText = `夾菜與結帳隊伍前進平穩，略需排隊，整體大約需要等候 ${waitTime} 分鐘左右。`;
+      } else if (storeName === "喜歡你飯捲年糕") {
+        aiText = `排隊隊伍長度一般，韓式美味現點現做，預估需等候 ${waitTime} 分鐘，是風味與時間的平衡點。`;
+      } else if (storeName === "天津蔥抓餅") {
+        aiText = `現點現煎需略微等待，隊伍前進尚可，預估大約需要 ${waitTime} 分鐘。`;
+      } else if (storeName === "摩斯漢堡") {
+        aiText = `摩斯漢堡人流一般，現做漢堡需要等候 ${waitTime} 分鐘，可先點餐稍候。`;
+      } else if (storeName === "宣坊泰式料理") {
+        aiText = `泰式椒麻雞與咖哩飯人氣適中，預估出餐需要 ${waitTime} 分鐘。`;
+      } else {
+        aiText = `排隊隊伍長度適中，預估需要等候 ${waitTime} 分鐘左右，仍屬合理用餐時間。`;
+      }
+    } else {
+      aiStatus = "🔴 稍嫌擁擠";
+      aiClass = "bg-red-50 text-red-700 border border-red-200 dark:bg-red-950/20 dark:text-red-400 dark:border-red-900/30";
+      if (storeName === "麗宴精緻自助餐") {
+        aiText = `正值熱門用餐時段，夾菜與結帳隊伍人流極多，預估需要等候 ${waitTime} 分鐘，建議避開人潮。`;
+      } else if (storeName === "喜歡你飯捲年糕") {
+        aiText = `點餐人數較多，現做飯捲與年糕出餐較慢，預估需要等候長達 ${waitTime} 分鐘。`;
+      } else if (storeName === "天津蔥抓餅") {
+        aiText = `排隊隊伍較長，現煎抓餅速度有限，預估需要等候大約 ${waitTime} 分鐘。`;
+      } else if (storeName === "摩斯漢堡") {
+        aiText = `點餐人潮擁擠且現點現做，預估等待時間長達 ${waitTime} 分鐘，趕時間的同學建議先避開。`;
+      } else if (storeName === "宣坊泰式料理") {
+        aiText = `熱門餐點現炸椒麻雞等製程費時，排隊較為擁擠，預估需等候 ${waitTime} 分鐘。`;
+      } else {
+        aiText = `現場用餐與排隊人潮眾多，等待時間長達 ${waitTime} 分鐘，建議可以晚點再來訪。`;
+      }
+    }
+    
+    return { aiStatus, aiText, aiClass };
   }
 
   function calculateWaitTimes() {
@@ -642,6 +767,14 @@ document.addEventListener("DOMContentLoaded", () => {
   function updateRealTimeClock() {
     const time = getTaipeiTime();
     clockText.innerHTML = `<b>${time.hour}:${time.minute}:${time.second}</b>`;
+    
+    // Recalculate wait times and re-render dashboard grid every 15 seconds
+    const sec = parseInt(time.second, 10);
+    if (sec % 15 === 0) {
+      calculateWaitTimes();
+      renderDashboardGrid();
+      updateDashboardRecommendationBanner();
+    }
   }
   
   function initTimeInputs() {
@@ -993,7 +1126,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const waitTime = forecast.waitTime;
       
       const pathResult = findShortestPath(campusGraph, "第一教學大樓", "學生餐廳");
-      const walkTime = Math.max(1, Math.round(pathResult.distance / 80));
+      const walkTime = googleMapsWalkTimes["第一教學大樓"] || Math.max(1, Math.round(pathResult.distance / 80));
       const totalTime = walkTime + waitTime;
 
       const mappedCategory = categoryMapping[canteen.type] || canteen.type;
@@ -1073,15 +1206,10 @@ document.addEventListener("DOMContentLoaded", () => {
     featuredWaitTime.textContent = featured.waitTime;
     featuredType.textContent = featured.type;
 
-    const nodeStr = featured.pathResult.path.join(" ➔ ");
     featuredReasons.innerHTML = `
       <li class="flex items-start gap-sm">
         <span class="material-symbols-outlined text-primary text-[20px] mt-0.5">check_circle</span>
         <span>總耗時最短，包含步行 <b>${featured.walkTime}</b> 分鐘及店內等待 <b>${featured.waitTime}</b> 分鐘。</span>
-      </li>
-      <li class="flex items-start gap-sm">
-        <span class="material-symbols-outlined text-primary text-[20px] mt-0.5">check_circle</span>
-        <span>步行路線：${nodeStr}。</span>
       </li>
       <li class="flex items-start gap-sm">
         <span class="material-symbols-outlined text-primary text-[20px] mt-0.5">check_circle</span>
@@ -1337,9 +1465,7 @@ document.addEventListener("DOMContentLoaded", () => {
       startLng = coordsToUse.lng;
 
       const pathResult = findShortestPath(campusGraph, finalStartNode, "學生餐廳");
-      walkTime = Math.max(1, Math.round(pathResult.distance / 80)); // 80米/分鐘
-      const gpsToNodeDist = calculateDistance(coordsToUse.lat, coordsToUse.lng, campusNodes[finalStartNode].lat, campusNodes[finalStartNode].lng);
-      walkTime += Math.round(gpsToNodeDist / 80);
+      walkTime = googleMapsWalkTimes[finalStartNode] || Math.max(1, Math.round(pathResult.distance / 80));
 
     } else {
       gpsRouteStatus.classList.add("hidden");
@@ -1350,7 +1476,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       const pathResult = findShortestPath(campusGraph, start, "學生餐廳");
-      walkTime = Math.max(1, Math.round(pathResult.distance / 80));
+      walkTime = googleMapsWalkTimes[start] || Math.max(1, Math.round(pathResult.distance / 80));
     }
 
     // Update KPIs depending on whether routing has been officially requested
@@ -1637,10 +1763,11 @@ document.addEventListener("DOMContentLoaded", () => {
       modalWait.textContent = canteen.waitTime + " 分鐘";
       const currentQueue = Math.round((canteen.minQueue + canteen.maxQueue) / 2);
       modalQueue.textContent = `${currentQueue} 人`;
-      modalAiReport.className = `p-md rounded-xl ${details.aiClass}`;
+      const aiReport = getDynamicAiReport(canteen.name, canteen.waitTime);
+      modalAiReport.className = `p-md rounded-xl ${aiReport.aiClass}`;
       modalAiReport.innerHTML = `
-        <p class="font-bold mb-1">${details.aiStatus}</p>
-        <p class="text-sm font-semibold">${details.aiText}</p>
+        <p class="font-bold mb-1">${aiReport.aiStatus}</p>
+        <p class="text-sm font-semibold">${aiReport.aiText}</p>
       `;
     }
 
