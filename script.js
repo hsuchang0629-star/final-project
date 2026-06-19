@@ -16,34 +16,34 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   const googleMapsWalkTimes = {
-    "第一教學大樓": 1,
-    "第二教學大樓": 2,
-    "第三教學大樓": 3,
-    "第四教學大樓": 3,
-    "第六教學大樓": 1,
-    "設計館": 3,
-    "材資館": 3,
-    "土木館": 2,
-    "化學工程館": 2,
-    "分子科學工程館": 2,
-    "共同科館": 4,
-    "綜合科館": 5,
-    "圖書館": 3,
-    "行政大樓": 4,
-    "藝文中心": 4,
-    "紅樓": 2,
-    "先鋒國際研發大樓": 5,
-    "億光大樓": 10,
-    "新生校門": 1,
-    "新生側門": 3,
-    "正校門": 5,
-    "建國側門": 6,
-    "東校區建國側門": 7,
-    "國父百年紀念館": 1,
-    "光華館": 1,
-    "宏裕科技研究大樓": 1,
-    "校友會館": 2,
-    "校史館": 3
+    "第一教學大樓": 3,
+    "第二教學大樓": 4,
+    "第三教學大樓": 5,
+    "第四教學大樓": 5,
+    "第六教學大樓": 3,
+    "設計館": 5,
+    "材資館": 5,
+    "土木館": 3,
+    "化學工程館": 3,
+    "分子科學工程館": 3,
+    "共同科館": 5,
+    "綜合科館": 6,
+    "圖書館": 4,
+    "行政大樓": 5,
+    "藝文中心": 5,
+    "紅樓": 3,
+    "先鋒國際研發大樓": 6,
+    "億光大樓": 11,
+    "新生校門": 3,
+    "新生側門": 4,
+    "正校門": 6,
+    "建國側門": 7,
+    "東校區建國側門": 8,
+    "國父百年紀念館": 3,
+    "光華館": 2,
+    "宏裕科技研究大樓": 2,
+    "校友會館": 3,
+    "校史館": 4
   };
 
   // ==========================================
@@ -1374,13 +1374,29 @@ document.addEventListener("DOMContentLoaded", () => {
     gpsOpt.textContent = "📍 GPS 目前位置";
     routeStartNode.appendChild(gpsOpt);
 
-    // 過濾起點 (教學大樓、出入口與運動場)，並排除學生宿舍、second_bld、網球場、籃球場、運動場
-    const excludeList = ["學生宿舍", "second_bld", "網球場", "籃球場", "運動場"];
+    // 過濾起點 (教學大樓、出入口與運動場)，並排除學生宿舍、second_bld、網球場、籃球場、運動場、建國側門、新生側門、新生校門、東校區建國側門、光華館
+    const excludeList = ["學生宿舍", "second_bld", "網球場", "籃球場", "運動場", "建國側門", "新生側門", "新生校門", "東校區建國側門", "光華館"];
+    const teachingBuildingsOrder = [
+      "第一教學大樓",
+      "第二教學大樓",
+      "第三教學大樓",
+      "第四教學大樓",
+      "第六教學大樓"
+    ];
     const startOptions = Object.keys(campusNodes).filter(key => {
       const type = campusNodes[key].type;
       const isValid = type === "building" || type === "gate" || type === "sports";
       return isValid && !excludeList.includes(key);
-    }).sort();
+    }).sort((a, b) => {
+      const indexA = teachingBuildingsOrder.indexOf(a);
+      const indexB = teachingBuildingsOrder.indexOf(b);
+      if (indexA !== -1 && indexB !== -1) {
+        return indexA - indexB;
+      }
+      if (indexA !== -1) return -1;
+      if (indexB !== -1) return 1;
+      return a.localeCompare(b, "zh-Hant");
+    });
 
     const canteens = ["麗宴精緻自助餐", "喜歡你飯捲年糕", "天津蔥抓餅", "摩斯漢堡", "宣坊泰式料理"];
 
