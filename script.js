@@ -5,6 +5,15 @@
 document.addEventListener("DOMContentLoaded", () => {
   // 1. Data & 路網資料庫初始化
   const restaurants = window.restaurantData || [];
+  let routeCalculated = false;
+
+  const categoryMapping = {
+    "自助餐": "便當",
+    "韓式料理": "便當",
+    "泰式料理": "便當",
+    "中式輕食": "點心",
+    "速食連鎖": "速食"
+  };
 
   // ==========================================
   // 強制內建真實世界經緯度校園網路資料庫 (真實座標)
@@ -18,7 +27,6 @@ document.addEventListener("DOMContentLoaded", () => {
       "新生側門": { lat: 25.04250, lng: 121.53232, type: "gate" },
       "建國側門": { lat: 25.04250, lng: 121.53675, type: "gate" },
       "東校區建國側門": { lat: 25.04250, lng: 121.53725, type: "gate" },
-      "捷運忠孝新生站4號出口": { lat: 25.04200, lng: 121.53232, type: "gate" },
 
       // 【西校區：教學大樓與設施 - 已對齊水平/垂直直角線】
       "共同科館": { lat: 25.04200, lng: 121.53450, type: "building" },
@@ -76,7 +84,19 @@ document.addEventListener("DOMContentLoaded", () => {
       "東校區_建國北側轉角": { lat: 25.04332, lng: 121.53725, type: "path" },
       "西校區_建國西側跨街點": { lat: 25.04332, lng: 121.53540, type: "path" },
       "北側主通道_化學館北轉角": { lat: 25.04410, lng: 121.53470, type: "path" },
-      "學餐北側過渡點": { lat: 25.04410, lng: 121.53328789865442, type: "path" }
+      "學餐北側過渡點": { lat: 25.04410, lng: 121.53328789865442, type: "path" },
+      
+      // 【修復西校區與各處行人道微節點 coordinates】
+      "通道_一教與二教間": { lat: 25.04332, lng: 121.53400, type: "path" },
+      "通道_三教與校史館間": { lat: 25.04265, lng: 121.53380, type: "path" },
+      "西側通道_工程學院轉角1": { lat: 25.04290, lng: 121.53320, type: "path" },
+      "西側通道_工程學院轉角2": { lat: 25.04300, lng: 121.53318, type: "path" },
+      "西側通道_土木館東側1": { lat: 25.04320, lng: 121.53315, type: "path" },
+      "西側通道_土木館東側2": { lat: 25.04335, lng: 121.53312, type: "path" },
+      "西側通道_衛生保健組旁": { lat: 25.04355, lng: 121.53305, type: "path" },
+      "西側通道_海音咖啡轉角1": { lat: 25.04375, lng: 121.53295, type: "path" },
+      "西側通道_海音咖啡轉角2": { lat: 25.04382, lng: 121.53285, type: "path" },
+      "西側通道_土木館東側": { lat: 25.04332, lng: 121.53328789865442, type: "path" }
   };
 
   // ==========================================
@@ -92,7 +112,6 @@ document.addEventListener("DOMContentLoaded", () => {
       "正校門轉角": { "正校門": 80, "中庭廣場_共同科館前": 10 },
       "新生校門": { "西側通道_海音咖啡轉角2": 45 }, // 改為連接海音咖啡轉角2，避開直接穿牆百年紀念館
       "新生側門": { "西側主通道_材資館前": 50 },
-      "捷運忠孝新生站4號出口": { "西側主通道_設計館前": 60 },
       "建國側門": { "綜合科館": 60 },
       "東校區建國側門": { "東校區主通道_運動場旁": 30, "東校區_億光西側轉角": 100, "東校區_建國北側轉角": 80 },
       "共同科館": { "中庭廣場_共同科館前": 30 },
@@ -120,13 +139,13 @@ document.addEventListener("DOMContentLoaded", () => {
       "光華館": { "北校區通道_光華館南側": 20 },
       "學生餐廳": { "北校區通道_光華館南側": 20, "學餐北側過渡點": 8 }, // 鎖定光華館旁綠光庭園，並直連北側過渡點
       "學生宿舍": { "東校區主通道_宿舍前": 30 },
-      "網球場": { "東校區主通道_宿舍前": 40 },
+      "網球場": { "東校區主通道_宿舍前": 40, "東校區主通道_運動場旁": 100 },
       "籃球場": { "東校區主通道_宿舍前": 60 },
       "運動場": { "東校區主通道_運動場旁": 30 },
       "億光大樓": { "東校區_億光西側轉角": 25 },
       
       // 走道 Waypoints 網格連線 (西校區)
-      "西側主通道_設計館前": { "捷運忠孝新生站4號出口": 60, "設計館": 20, "西側主通道_材資館前": 80 },
+      "西側主通道_設計館前": { "設計館": 20, "西側主通道_材資館前": 80 },
       "西側主通道_材資館前": { "西側主通道_設計館前": 80, "新生側門": 50, "材資館": 20, "第四教學大樓": 30, "西側通道_工程學院轉角1": 25, "中庭廣場_行政大樓前": 140 },
       
       // 微型鏈狀連接，達到極其細緻的走道貼邊拐彎
@@ -153,7 +172,8 @@ document.addEventListener("DOMContentLoaded", () => {
       // 新的億光大樓到學生餐廳正交折線點位連線
       "東校區_億光西側轉角": { "億光大樓": 25, "東校區建國側門": 100 },
       "東校區_建國北側轉角": { "東校區建國側門": 80, "西校區_建國西側跨街點": 185 },
-      "西校區_建國西側跨街點": { "東校區_建國北側轉角": 185, "中庭廣場_圖書館前": 70 }
+      "西校區_建國西側跨街點": { "東校區_建國北側轉角": 185, "中庭廣場_圖書館前": 70 },
+      "西側通道_土木館東側": { "土木館": 40, "西側通道_土木館東側2": 15 }
   };
 
   // ==========================================
@@ -328,38 +348,138 @@ document.addEventListener("DOMContentLoaded", () => {
     return true; // 預設開啟
   }
 
-  // 計算初始等待時間 (使用固定公式防 NaN)
-  function calculateWaitTimes() {
-    const defaultData = {
-      "麗宴精緻自助餐": { minQueue: 10, maxQueue: 20 },
-      "喜歡你飯捲年糕": { minQueue: 4, maxQueue: 8, speedPerPerson: 2.0 },
-      "天津蔥抓餅": { minQueue: 2, maxQueue: 4, speedPerPerson: 1.67 },
-      "摩斯漢堡": { minQueue: 8, maxQueue: 16, speedPerPerson: 1.67 },
-      "宣坊泰式料理": { minQueue: 14, maxQueue: 22, speedPerPerson: 1.39 }
+  // Forecast formula based on Google Sheet data
+  function getSpreadsheetForecast(canteenName, day, hour, minute) {
+    const defaultForecast = { minQueue: 5, maxQueue: 10, minCook: 1.5, maxCook: 2, buyTime: 2 };
+    
+    // Day fallback for weekends (0 = Sunday, 6 = Saturday) -> map to Monday (1)
+    let targetDay = day;
+    if (targetDay === 0 || targetDay === 6) {
+      targetDay = 1;
+    }
+
+    const timeInMinutes = hour * 60 + minute;
+    // 12:30 ~ 13:00 is Peak
+    const isPeak = timeInMinutes >= 750 && timeInMinutes < 780;
+    
+    const db = {
+      1: { // Mon
+        peak: {
+          "摩斯漢堡": { minQueue: 10, maxQueue: 16, minCook: 1, maxCook: 1.5 },
+          "喜歡你飯捲年糕": { minQueue: 1, maxQueue: 3, minCook: 1.5, maxCook: 2 },
+          "天津蔥抓餅": { minQueue: 3, maxQueue: 4, minCook: 2, maxCook: 3 },
+          "宣坊泰式料理": { minQueue: 2, maxQueue: 10, minCook: 2, maxCook: 3 },
+          "麗宴精緻自助餐": { minQueue: 20, maxQueue: 40, buyTime: 2 }
+        },
+        offPeak: {
+          "摩斯漢堡": { minQueue: 2, maxQueue: 6, minCook: 1.5, maxCook: 2 },
+          "喜歡你飯捲年糕": { minQueue: 1, maxQueue: 1, minCook: 2, maxCook: 2 },
+          "天津蔥抓餅": { minQueue: 2, maxQueue: 3, minCook: 2, maxCook: 3 },
+          "宣坊泰式料理": { minQueue: 1, maxQueue: 2, minCook: 2, maxCook: 2 },
+          "麗宴精緻自助餐": { minQueue: 10, maxQueue: 20, buyTime: 2 }
+        }
+      },
+      2: { // Tue
+        peak: {
+          "摩斯漢堡": { minQueue: 6, maxQueue: 12, minCook: 1, maxCook: 1.5 },
+          "喜歡你飯捲年糕": { minQueue: 1, maxQueue: 4, minCook: 2, maxCook: 6 },
+          "天津蔥抓餅": { minQueue: 2, maxQueue: 5, minCook: 2, maxCook: 3 },
+          "宣坊泰式料理": { minQueue: 1, maxQueue: 4, minCook: 5, maxCook: 7 },
+          "麗宴精緻自助餐": { minQueue: 20, maxQueue: 40, buyTime: 2 }
+        },
+        offPeak: {
+          "摩斯漢堡": { minQueue: 2, maxQueue: 3, minCook: 1.5, maxCook: 2 },
+          "喜歡你飯捲年糕": { minQueue: 1, maxQueue: 2, minCook: 2, maxCook: 3 },
+          "天津蔥抓餅": { minQueue: 1, maxQueue: 3, minCook: 2, maxCook: 4 },
+          "宣坊泰式料理": { minQueue: 1, maxQueue: 1, minCook: 2, maxCook: 2 },
+          "麗宴精緻自助餐": { minQueue: 1, maxQueue: 1, buyTime: 2 }
+        }
+      },
+      3: { // Wed
+        peak: {
+          "摩斯漢堡": { minQueue: 10, maxQueue: 17, minCook: 1, maxCook: 1.5 },
+          "喜歡你飯捲年糕": { minQueue: 3, maxQueue: 6, minCook: 2, maxCook: 4 },
+          "天津蔥抓餅": { minQueue: 2, maxQueue: 6, minCook: 2, maxCook: 4 },
+          "宣坊泰式料理": { minQueue: 2, maxQueue: 8, minCook: 2, maxCook: 3 },
+          "麗宴精緻自助餐": { minQueue: 25, maxQueue: 45, buyTime: 2 }
+        },
+        offPeak: {
+          "摩斯漢堡": { minQueue: 4, maxQueue: 6, minCook: 1, maxCook: 1.5 },
+          "喜歡你飯捲年糕": { minQueue: 1, maxQueue: 1, minCook: 2, maxCook: 2 },
+          "天津蔥抓餅": { minQueue: 1, maxQueue: 2, minCook: 2, maxCook: 2 },
+          "宣坊泰式料理": { minQueue: 1, maxQueue: 1, minCook: 3, maxCook: 3 },
+          "麗宴精緻自助餐": { minQueue: 1, maxQueue: 1, buyTime: 2 }
+        }
+      },
+      4: { // Thu
+        peak: {
+          "摩斯漢堡": { minQueue: 10, maxQueue: 18, minCook: 1, maxCook: 1.5 },
+          "喜歡你飯捲年糕": { minQueue: 1, maxQueue: 3, minCook: 2, maxCook: 6 },
+          "天津蔥抓餅": { minQueue: 4, maxQueue: 12, minCook: 1, maxCook: 2 },
+          "宣坊泰式料理": { minQueue: 1, maxQueue: 7, minCook: 2, maxCook: 6 },
+          "麗宴精緻自助餐": { minQueue: 30, maxQueue: 55, buyTime: 2 }
+        },
+        offPeak: {
+          "摩斯漢堡": { minQueue: 6, maxQueue: 9, minCook: 1, maxCook: 1.5 },
+          "喜歡你飯捲年糕": { minQueue: 1, maxQueue: 2, minCook: 2, maxCook: 5 },
+          "天津蔥抓餅": { minQueue: 1, maxQueue: 4, minCook: 1, maxCook: 2 },
+          "宣坊泰式料理": { minQueue: 1, maxQueue: 1, minCook: 3, maxCook: 5 },
+          "麗宴精緻自助餐": { minQueue: 1, maxQueue: 3, buyTime: 2 }
+        }
+      },
+      5: { // Fri
+        peak: {
+          "摩斯漢堡": { minQueue: 9, maxQueue: 17, minCook: 0.8, maxCook: 1.5 },
+          "喜歡你飯捲年糕": { minQueue: 2, maxQueue: 4, minCook: 1, maxCook: 2 },
+          "天津蔥抓餅": { minQueue: 1, maxQueue: 3, minCook: 2, maxCook: 3 },
+          "宣坊泰式料理": { minQueue: 1, maxQueue: 3, minCook: 2, maxCook: 4 },
+          "麗宴精緻自助餐": { minQueue: 15, maxQueue: 32, buyTime: 2 }
+        },
+        offPeak: {
+          "摩斯漢堡": { minQueue: 3, maxQueue: 5, minCook: 1, maxCook: 1.5 },
+          "喜歡你飯捲年糕": { minQueue: 1, maxQueue: 1, minCook: 1, maxCook: 2 },
+          "天津蔥抓餅": { minQueue: 3, maxQueue: 8, minCook: 2, maxCook: 3 },
+          "宣坊泰式料理": { minQueue: 1, maxQueue: 1, minCook: 2, maxCook: 3 },
+          "麗宴精緻自助餐": { minQueue: 10, maxQueue: 21, buyTime: 2 }
+        }
+      }
     };
 
+    const dayData = db[targetDay] || db[1];
+    const periodData = isPeak ? dayData.peak : dayData.offPeak;
+    const canteenData = periodData[canteenName] || defaultForecast;
+
+    const minQueue = canteenData.minQueue;
+    const maxQueue = canteenData.maxQueue;
+    const minCook = canteenData.minCook || 2;
+    const maxCook = canteenData.maxCook || 2;
+    const buyTime = canteenData.buyTime || 2;
+
+    let waitTime = 10;
+    if (canteenName === "麗宴精緻自助餐") {
+      const minWait = minQueue > 0 ? (buyTime + (minQueue - 1) * 0.33) : 0;
+      const maxWait = maxQueue > 0 ? (buyTime + (maxQueue - 1) * 0.33) : 0;
+      waitTime = Math.round((minWait + maxWait) / 2);
+    } else {
+      const minWait = minQueue * minCook;
+      const maxWait = maxQueue * maxCook;
+      waitTime = Math.round((minWait + maxWait) / 2);
+    }
+
+    return {
+      minQueue,
+      maxQueue,
+      waitTime: isNaN(waitTime) ? 10 : waitTime
+    };
+  }
+
+  function calculateWaitTimes() {
+    const timeData = getTaipeiDateTime();
     restaurants.forEach(r => {
-      const fallback = defaultData[r.name] || { minQueue: 5, maxQueue: 10, speedPerPerson: 2 };
-      const minQueue = typeof r.minQueue === 'number' ? r.minQueue : fallback.minQueue;
-      const maxQueue = typeof r.maxQueue === 'number' ? r.maxQueue : fallback.maxQueue;
-      const speed = typeof r.speedPerPerson === 'number' ? r.speedPerPerson : (fallback.speedPerPerson || 2);
-
-      if (r.name === "麗宴精緻自助餐") {
-        const minWait = minQueue > 0 ? (1 * 2 + (minQueue - 1) * 0.33) : 0;
-        const maxWait = maxQueue > 0 ? (1 * 2 + (maxQueue - 1) * 0.33) : 0;
-        r.waitTime = Math.round((minWait + maxWait) / 2);
-        
-        const avgQueue = Math.round((minQueue + maxQueue) / 2);
-        if (avgQueue === 15) {
-          r.waitTime = 15; // 對齊 mockup 設計
-        }
-      } else {
-        r.waitTime = Math.round(((minQueue * speed) + (maxQueue * speed)) / 2);
-      }
-
-      if (isNaN(r.waitTime)) {
-        r.waitTime = 10;
-      }
+      const forecast = getSpreadsheetForecast(r.name, timeData.day, timeData.hour, timeData.minute);
+      r.minQueue = forecast.minQueue;
+      r.maxQueue = forecast.maxQueue;
+      r.waitTime = forecast.waitTime;
     });
   }
 
@@ -514,49 +634,9 @@ document.addEventListener("DOMContentLoaded", () => {
   // ==========================================
   // 3. Leaflet Map Initialization (真實 OpenStreetMap 底圖)
   // ==========================================
-  let activeMap = null;      // 頁面內建地圖
-  let activeModalMap = null; // 導航 Modal 內地圖
-  
   let userCoords = null;
   let isUsingFallbackGps = false;
   const campusCenter = [25.0433, 121.5345]; // 北科大真實校園中心點
-  
-  let simInterval = null;
-  let simMarker = null;
-
-  function initLeafletMaps() {
-    // 1. 初始化頁面內建地圖
-    if (document.getElementById("map")) {
-      activeMap = L.map('map', {
-        center: campusCenter,
-        zoom: 18,
-        minZoom: 15,
-        maxZoom: 21
-      });
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors',
-        maxZoom: 21,
-        maxNativeZoom: 19
-      }).addTo(activeMap);
-    }
-
-    // 2. 初始化導航 Modal 內地圖
-    if (document.getElementById("modal-map")) {
-      activeModalMap = L.map('modal-map', {
-        center: campusCenter,
-        zoom: 18,
-        minZoom: 15,
-        maxZoom: 21
-      });
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors',
-        maxZoom: 21,
-        maxNativeZoom: 19
-      }).addTo(activeModalMap);
-    }
-  }
-
-  initLeafletMaps();
 
   // 時鐘與時間輸入初始化
   function updateRealTimeClock() {
@@ -622,10 +702,6 @@ document.addEventListener("DOMContentLoaded", () => {
       tabRouteContainer.classList.remove("hidden");
       navRoute.className = activeNavClass;
       mobNavRoute.className = activeMobNavClass;
-      
-      setTimeout(() => {
-        if (activeMap) activeMap.invalidateSize();
-      }, 100);
       calculateRoutePlanner();
     }
     
@@ -813,21 +889,19 @@ document.addEventListener("DOMContentLoaded", () => {
   selectDashboardSort.addEventListener("change", renderDashboardGrid);
 
   function updateDashboardRecommendationBanner() {
+    // 確保即時時間與等待時間已更新
+    calculateWaitTimes();
+
     let bestCanteen = null;
-    let minTotalTime = Infinity;
+    let minWaitTime = Infinity;
     const timeData = getTaipeiDateTime();
 
     restaurants.forEach(canteen => {
       const isOpen = isRestaurantOpen(canteen.name, timeData.day, timeData.hour, timeData.minute);
       if (!isOpen) return;
 
-      // 依尋路計算從第一教學大樓前往餐廳的步行時間
-      const pathResult = findShortestPath(campusGraph, "第一教學大樓", "學生餐廳");
-      const walkTime = Math.max(1, Math.round(pathResult.distance / 80));
-      const totalTime = walkTime + canteen.waitTime;
-
-      if (totalTime < minTotalTime) {
-        minTotalTime = totalTime;
+      if (canteen.waitTime < minWaitTime) {
+        minWaitTime = canteen.waitTime;
         bestCanteen = canteen;
       }
     });
@@ -836,7 +910,12 @@ document.addEventListener("DOMContentLoaded", () => {
       bannerRecommendName.textContent = bestCanteen.name;
       bannerRecommendTime.textContent = bestCanteen.waitTime + " 分鐘";
       btnBannerGo.style.display = "";
-      btnBannerGo.onclick = () => openStoreModal(bestCanteen.name);
+      btnBannerGo.onclick = () => {
+        routeEndNode.value = bestCanteen.name;
+        routeCalculated = true;
+        calculateRoutePlanner();
+        switchTab("route");
+      };
     } else {
       bannerRecommendName.textContent = "目前所有學餐皆非營業時段";
       bannerRecommendTime.textContent = "--";
@@ -873,7 +952,20 @@ document.addEventListener("DOMContentLoaded", () => {
   // 6. Tab 2: 決策規劃 (智慧推薦)
   // ==========================================
   function calculateSmartRecommendations() {
-    const endPreference = recommendCategorySelect.value;
+    let endPreference = recommendCategorySelect.value;
+    let isValid = false;
+    if (recommendCategorySelect && recommendCategorySelect.options) {
+      for (let i = 0; i < recommendCategorySelect.options.length; i++) {
+        if (recommendCategorySelect.options[i].value === endPreference) {
+          isValid = true;
+          break;
+        }
+      }
+    }
+    if (!endPreference || !isValid) {
+      endPreference = "none";
+      recommendCategorySelect.value = "none";
+    }
     const currentTimeStr = recommendTimeInput.value || "12:30";
     const maxWaitLimitVal = recommendMaxWaitInput.value.trim();
     const maxWaitLimit = maxWaitLimitVal !== "" ? parseInt(maxWaitLimitVal, 10) : Infinity;
@@ -897,17 +989,23 @@ document.addEventListener("DOMContentLoaded", () => {
 
     restaurants.forEach(canteen => {
       const isOpen = isRestaurantOpen(canteen.name, day, startHour, startMin);
+      const forecast = getSpreadsheetForecast(canteen.name, day, startHour, startMin);
+      const waitTime = forecast.waitTime;
+      
       const pathResult = findShortestPath(campusGraph, "第一教學大樓", "學生餐廳");
       const walkTime = Math.max(1, Math.round(pathResult.distance / 80));
-      const totalTime = walkTime + canteen.waitTime;
+      const totalTime = walkTime + waitTime;
 
-      const categoryMatches = (endPreference === "none" || canteen.type === endPreference);
-      const waitTimeComplies = (maxWaitLimitVal === "" || isNaN(maxWaitLimit) || canteen.waitTime <= maxWaitLimit);
+      const mappedCategory = categoryMapping[canteen.type] || canteen.type;
+      const categoryMatches = (endPreference === "none" || canteen.type === endPreference || mappedCategory === endPreference);
+      const waitTimeComplies = (maxWaitLimitVal === "" || isNaN(maxWaitLimit) || waitTime <= maxWaitLimit);
 
       const item = {
         name: canteen.name,
         type: canteen.type,
-        waitTime: canteen.waitTime,
+        waitTime: waitTime,
+        minQueue: forecast.minQueue,
+        maxQueue: forecast.maxQueue,
         walkTime: walkTime,
         totalTime: totalTime,
         pathResult: pathResult,
@@ -947,7 +1045,26 @@ document.addEventListener("DOMContentLoaded", () => {
     // Winner #1: 首選推薦
     const featured = candidates[0];
     featuredChoiceContainer.classList.remove("hidden");
-    featuredChoiceContainer.onclick = () => openStoreModal(featured.name);
+    featuredChoiceContainer.onclick = null;
+    
+    const btnFeaturedDetail = document.getElementById("btn-featured-detail");
+    const btnFeaturedRoute = document.getElementById("btn-featured-route");
+    
+    if (btnFeaturedDetail) {
+      btnFeaturedDetail.onclick = (e) => {
+        e.stopPropagation();
+        openStoreModal(featured.name);
+      };
+    }
+    if (btnFeaturedRoute) {
+      btnFeaturedRoute.onclick = (e) => {
+        e.stopPropagation();
+        routeEndNode.value = featured.name;
+        routeCalculated = true;
+        calculateRoutePlanner();
+        switchTab("route");
+      };
+    }
     
     const featuredConfig = storeDetailsConfig[featured.name] || {};
     featuredImg.src = featuredConfig.img || "data/cafeteria.png";
@@ -999,10 +1116,35 @@ document.addEventListener("DOMContentLoaded", () => {
             </span>
           </div>
           <p class="text-label-sm text-on-surface-variant italic mb-md">${r.description}</p>
-          <button class="w-full py-sm border border-primary text-primary pill-radius font-label-md hover:bg-primary hover:text-on-primary transition-all font-bold">
-            查看詳情
-          </button>
+          <div class="flex gap-2">
+            <button class="flex-1 py-sm border border-primary text-primary pill-radius font-label-md hover:bg-primary hover:text-on-primary transition-all font-bold btn-detail">
+              查看詳情
+            </button>
+            <button class="flex-1 py-sm bg-primary text-on-primary pill-radius font-label-md hover:opacity-90 transition-all font-bold btn-route">
+              規劃路線
+            </button>
+          </div>
         `;
+        
+        const btnDetail = choiceCard.querySelector(".btn-detail");
+        const btnRoute = choiceCard.querySelector(".btn-route");
+        
+        if (btnDetail) {
+          btnDetail.addEventListener("click", (e) => {
+            e.stopPropagation();
+            openStoreModal(r.name);
+          });
+        }
+        if (btnRoute) {
+          btnRoute.addEventListener("click", (e) => {
+            e.stopPropagation();
+            routeEndNode.value = r.name;
+            routeCalculated = true;
+            calculateRoutePlanner();
+            switchTab("route");
+          });
+        }
+        
         choiceCard.addEventListener("click", () => openStoreModal(r.name));
         secondaryOptionsPanel.appendChild(choiceCard);
       });
@@ -1132,115 +1274,6 @@ document.addEventListener("DOMContentLoaded", () => {
     routeEndNode.value = "天津蔥抓餅";
   }
 
-  // 清除地圖舊圖層 (Leaflet Layer 移除)
-  function clearMapLayers(targetMap) {
-    if (!targetMap) return;
-    if (targetMap._routePolyline) {
-      targetMap.removeLayer(targetMap._routePolyline);
-      targetMap._routePolyline = null;
-    }
-    if (targetMap._startMarker) {
-      targetMap.removeLayer(targetMap._startMarker);
-      targetMap._startMarker = null;
-    }
-    if (targetMap._endMarker) {
-      targetMap.removeLayer(targetMap._endMarker);
-      targetMap._endMarker = null;
-    }
-    if (targetMap._intermediateMarkers) {
-      targetMap._intermediateMarkers.forEach(m => targetMap.removeLayer(m));
-      targetMap._intermediateMarkers = [];
-    } else {
-      targetMap._intermediateMarkers = [];
-    }
-  }
-
-  // Leaflet 畫線函數。每次規劃新路線前，必須先清除舊的紅色 L.polyline 與地標 Marker，防止殘留蜘蛛網 Bug
-  function drawRouteOnMap(mapInstance, pathNodes) {
-    if (!mapInstance || !pathNodes || pathNodes.length === 0) return;
-
-    // 清除舊線段與地標，避免蜘蛛網殘留
-    clearMapLayers(mapInstance);
-
-    const pathCoords = [];
-
-    pathNodes.forEach(nodeName => {
-      const coord = campusNodes[nodeName];
-      if (coord) {
-        pathCoords.push(L.latLng(coord.lat, coord.lng));
-      }
-    });
-
-    if (pathCoords.length === 0) return;
-
-    // 1. 繪製導航紅線 L.polyline (加上 smoothFactor: 1.0 以便平滑渲染)
-    const polyline = L.polyline(pathCoords, {
-      color: '#ef4444', // 鮮紅色導航路徑
-      weight: 6,
-      opacity: 0.9,
-      lineJoin: 'round',
-      smoothFactor: 1.0
-    }).addTo(mapInstance);
-    mapInstance._routePolyline = polyline;
-
-    // 2. 繪製起點標記（紫色圓點，加上 popup）
-    const startM = L.circleMarker(pathCoords[0], {
-      radius: 9,
-      color: '#ffffff',
-      fillColor: '#a855f7', // 紫色起點
-      fillOpacity: 1.0,
-      weight: 2.5
-    }).addTo(mapInstance);
-    
-    startM.bindPopup(`<div class="font-bold text-xs text-[#1c1c1a] text-center">🏁 起點：${pathNodes[0] === 'GPS目前位置' ? '我的位置' : pathNodes[0]}</div>`, {
-      closeButton: false
-    });
-    mapInstance._startMarker = startM;
-
-    // 3. 繪製終點標記（紅色 Pin 地標 Marker，強制鎖定在綠光庭園/光華館旁校內，並預設開啟 popup）
-    const targetLatLng = L.latLng(25.044027973087083, 121.53328789865442);
-    const redPinSvg = `
-    <svg width="32" height="42" viewBox="0 0 32 42" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M16 0C7.16 0 0 7.16 0 16C0 28 16 42 16 42C16 42 32 28 32 16C32 7.16 24.84 0 16 0ZM16 22C12.68 22 10 19.32 10 16C10 12.68 12.68 10 16 10C19.32 10 22 12.68 22 16C22 19.32 19.32 22 16 22Z" fill="#ef4444" stroke="#ffffff" stroke-width="2"/>
-    </svg>
-    `;
-    const redIcon = L.divIcon({
-      html: redPinSvg,
-      iconSize: [32, 42],
-      iconAnchor: [16, 42],
-      popupAnchor: [0, -42],
-      className: 'custom-red-pin'
-    });
-
-    const endM = L.marker(targetLatLng, { icon: redIcon }).addTo(mapInstance);
-    endM.bindPopup(`<div class="font-bold text-sm text-[#1c1c1a] min-w-[120px] text-center">📍 終點：學生餐廳<br><span class="text-xs text-[#82756a]">(綠光庭園/海音咖啡)</span><br><span class="text-[10px] text-[#82756a]">(25.044028, 121.533288)</span></div>`, {
-      closeButton: false,
-      autoClose: false,
-      closeOnClick: false
-    }).addTo(mapInstance);
-    
-    setTimeout(() => {
-      endM.openPopup();
-    }, 250);
-
-    mapInstance._endMarker = endM;
-
-    // 4. 繪製中繼走道轉折點 (灰色小圓點)
-    for (let i = 1; i < pathCoords.length - 1; i++) {
-      const im = L.circleMarker(pathCoords[i], {
-        radius: 4.5,
-        color: '#4b5563',
-        fillColor: '#ffffff',
-        fillOpacity: 1,
-        weight: 1.5
-      }).addTo(mapInstance);
-      mapInstance._intermediateMarkers.push(im);
-    }
-
-    // 地圖視角縮放至完整顯示路徑
-    mapInstance.fitBounds(polyline.getBounds(), { padding: [40, 40] });
-  }
-
   function calculateRoutePlanner() {
     const start = routeStartNode.value;
     const end = routeEndNode.value;
@@ -1252,9 +1285,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     let walkTime = 0;
     let waitTime = canteen.waitTime;
-    const endNodeName = "學生餐廳"; // 不管起點在哪裡，終點選餐廳時，Dijkstra 終點均鎖死在學生餐廳
 
-    clearMapLayers(activeMap);
+    let startLat = 25.0433;
+    let startLng = 121.5345;
 
     if (start === "gps") {
       let coordsToUse = userCoords;
@@ -1272,11 +1305,15 @@ document.addEventListener("DOMContentLoaded", () => {
       let finalStartNode = "正校門";
 
       if (distToCenter > 500) {
+        const isAlreadySnapped = (coordsToUse.lat === 25.042205042013688 && coordsToUse.lng === 121.53542339646548);
+        if (!isAlreadySnapped) {
+          alert("偵測到不在校園內 自動定位到正門口");
+        }
         coordsToUse = { lat: 25.042205042013688, lng: 121.53542339646548 };
         userCoords = { lat: 25.042205042013688, lng: 121.53542339646548 };
         finalStartNode = "正校門";
         gpsRouteStatus.className = "text-xs font-semibold pl-2 mt-1 text-amber-600";
-        gpsRouteStatus.textContent = `⚠️ 位置超出校園 500m，已定位至正門口。`;
+        gpsRouteStatus.textContent = "偵測到不在校園內 自動定位到正門口";
         gpsRouteStatus.classList.remove("hidden");
       } else {
         // 尋找最近的真實校園節點作為起點
@@ -1296,36 +1333,34 @@ document.addEventListener("DOMContentLoaded", () => {
         gpsRouteStatus.classList.remove("hidden");
       }
 
-      campusNodes["GPS目前位置"] = { lat: coordsToUse.lat, lng: coordsToUse.lng };
+      startLat = coordsToUse.lat;
+      startLng = coordsToUse.lng;
 
-      const pathResult = findShortestPath(campusGraph, finalStartNode, endNodeName);
+      const pathResult = findShortestPath(campusGraph, finalStartNode, "學生餐廳");
       walkTime = Math.max(1, Math.round(pathResult.distance / 80)); // 80米/分鐘
-      
       const gpsToNodeDist = calculateDistance(coordsToUse.lat, coordsToUse.lng, campusNodes[finalStartNode].lat, campusNodes[finalStartNode].lng);
       walkTime += Math.round(gpsToNodeDist / 80);
 
-      kpiWalkTime.textContent = walkTime + " 分鐘";
-      if (!isOpen) {
-        kpiWaitTime.textContent = "非營業";
-        kpiTotalTime.textContent = "非營業";
-        kpiStatusBadge.className = "inline-block mt-2 px-3 py-1 rounded-full text-xs font-bold bg-red-50 text-red-700 border border-red-200 dark:bg-red-950/20 dark:text-red-400 dark:border-red-900/30";
-        kpiStatusBadge.textContent = "🔴 目前非營業時段";
-      } else {
-        const totalTime = walkTime + waitTime;
-        kpiWaitTime.textContent = waitTime + " 分鐘";
-        kpiTotalTime.textContent = totalTime + " 分鐘";
-        updateKpiBadge(totalTime);
-      }
-
-      const fullPath = ["GPS目前位置", ...pathResult.path];
-      drawRouteOnMap(activeMap, fullPath);
-
     } else {
       gpsRouteStatus.classList.add("hidden");
+      const node = campusNodes[start];
+      if (node) {
+        startLat = node.lat;
+        startLng = node.lng;
+      }
 
-      const pathResult = findShortestPath(campusGraph, start, endNodeName);
+      const pathResult = findShortestPath(campusGraph, start, "學生餐廳");
       walkTime = Math.max(1, Math.round(pathResult.distance / 80));
+    }
 
+    // Update KPIs depending on whether routing has been officially requested
+    if (!routeCalculated) {
+      kpiWalkTime.textContent = "    分鐘";
+      kpiWaitTime.textContent = "    分鐘";
+      kpiTotalTime.textContent = "    分鐘";
+      kpiStatusBadge.className = "inline-block mt-2 px-3 py-1 rounded-full text-xs font-bold bg-[#fcf9f5] text-primary border border-outline-variant";
+      kpiStatusBadge.textContent = "等待計算";
+    } else {
       kpiWalkTime.textContent = walkTime + " 分鐘";
       if (!isOpen) {
         kpiWaitTime.textContent = "非營業";
@@ -1338,11 +1373,26 @@ document.addEventListener("DOMContentLoaded", () => {
         kpiTotalTime.textContent = totalTime + " 分鐘";
         updateKpiBadge(totalTime);
       }
-
-      drawRouteOnMap(activeMap, pathResult.path);
     }
 
-    // 更快學餐推薦
+    // Update embedded Google Maps iframe to show directions
+    const destLat = 25.044027973087083;
+    const destLng = 121.53328789865442;
+    const mapIframe = document.getElementById("map-iframe");
+    if (mapIframe) {
+      let startLabel = start;
+      if (start === "gps") {
+        const distToCenter = calculateDistance(startLat, startLng, campusCenter[0], campusCenter[1]);
+        if (distToCenter > 500 || (startLat === 25.042205042013688 && startLng === 121.53542339646548)) {
+          startLabel = "正校門";
+        } else {
+          startLabel = "我的位置";
+        }
+      }
+      mapIframe.src = `https://maps.google.com/maps?saddr=${startLat},${startLng}+(${encodeURIComponent(startLabel)})&daddr=${destLat},${destLng}+(${encodeURIComponent("學生餐廳")})&dirflg=w&output=embed`;
+    }
+
+    // Faster canteen recommendation logic
     let betterChoice = null;
     let maxSavings = 0;
     const currentTotal = walkTime + waitTime;
@@ -1411,6 +1461,7 @@ document.addEventListener("DOMContentLoaded", () => {
           lng: position.coords.longitude
         };
         isUsingFallbackGps = false;
+        
         gpsRouteStatus.textContent = "📍 GPS 定位成功！";
         gpsRouteStatus.className = "text-xs font-semibold pl-2 mt-1 text-green-600";
         routeStartNode.value = "gps";
@@ -1423,10 +1474,16 @@ document.addEventListener("DOMContentLoaded", () => {
       },
       (error) => {
         console.warn("GPS failed, using NTUT center fallback:", error);
-        // 使用設計館位置進行模擬
-        userCoords = { lat: 25.0419, lng: 121.5332 };
+        const simulateOutside = confirm("無法獲取真實 GPS 定位 (通常為瀏覽器本機 file:// 載入的安全限制)。\n\n是否模擬「校園外部定位」以測試「偵測到不在校園內 自動定位到正門口」之功能？\n\n[確定]：模擬校外定位 (台北車站)\n[取消]：模擬校內定位 (設計館)");
+        
+        if (simulateOutside) {
+          userCoords = { lat: 25.0462, lng: 121.5176 }; // 台北車站 (校外)
+          gpsRouteStatus.textContent = "📍 定位模擬中 (模擬校外定位)";
+        } else {
+          userCoords = { lat: 25.0419, lng: 121.5332 }; // 設計館 (校內)
+          gpsRouteStatus.textContent = "📍 定位模擬中 (使用校園預設點)";
+        }
         isUsingFallbackGps = true;
-        gpsRouteStatus.textContent = "📍 定位模擬中 (使用校園預設點)";
         gpsRouteStatus.className = "text-xs font-semibold pl-2 mt-1 text-green-600";
         routeStartNode.value = "gps";
 
@@ -1444,6 +1501,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   btnRouteSwitchTarget.addEventListener("click", () => {
     routeEndNode.value = betterCanteenName.textContent;
+    routeCalculated = true;
     calculateRoutePlanner();
   });
 
@@ -1452,169 +1510,56 @@ document.addEventListener("DOMContentLoaded", () => {
       triggerRouteGpsLocation(false);
     } else {
       gpsRouteStatus.classList.add("hidden");
+      calculateRoutePlanner();
     }
   });
 
+  routeEndNode.addEventListener("change", () => {
+    calculateRoutePlanner();
+  });
+
   // ==========================================
-  // 8. 導航 Modal 彈出與模擬導航
+  // 8. Google Maps 導航整合與外部連結
   // ==========================================
-  function triggerMapNavigationModal() {
+  function openExternalGoogleMaps() {
     const start = routeStartNode.value;
     const end = routeEndNode.value;
-    const canteen = restaurants.find(r => r.name === end);
-    if (!canteen) return;
-
-    const timeData = getTaipeiDateTime();
-    const isOpen = isRestaurantOpen(canteen.name, timeData.day, timeData.hour, timeData.minute);
-
-    clearMapLayers(activeModalMap);
-    if (simInterval) clearInterval(simInterval);
-    if (simMarker && activeModalMap) activeModalMap.removeLayer(simMarker);
-
-    let finalStartNode = start;
-    let startGps = null;
-    let walkTime = 0;
-    let waitTime = canteen.waitTime;
-
+    
+    let startLat, startLng;
     if (start === "gps") {
-      if (!userCoords) {
-        triggerRouteGpsLocation(true);
-        return;
-      }
-      startGps = [userCoords.lat, userCoords.lng];
-      
-      const distToCenter = calculateDistance(userCoords.lat, userCoords.lng, campusCenter[0], campusCenter[1]);
-      if (distToCenter > 500) {
-        userCoords = { lat: 25.042205042013688, lng: 121.53542339646548 };
-        finalStartNode = "正校門";
-        modalGpsWarning.classList.remove("hidden");
-        modalGpsWarningText.textContent = `您的 GPS 位置距離校園過遠 (>500m)，系統已自動為您重置起點為「北科正門口」。`;
+      if (userCoords) {
+        startLat = userCoords.lat;
+        startLng = userCoords.lng;
       } else {
-        modalGpsWarning.classList.add("hidden");
-        let minD = Infinity;
-        campusGraph.nodes.forEach(node => {
-          const c = campusNodes[node];
-          if (c) {
-            const d = calculateDistance(userCoords.lat, userCoords.lng, c.lat, c.lng);
-            if (d < minD) {
-              minD = d;
-              finalStartNode = node;
-            }
-          }
-        });
+        startLat = 25.042205042013688;
+        startLng = 121.53542339646548;
       }
-
-      campusNodes["GPS目前位置"] = { lat: userCoords.lat, lng: userCoords.lng };
-
-      const pathResult = findShortestPath(campusGraph, finalStartNode, "學生餐廳");
-      walkTime = Math.max(1, Math.round(pathResult.distance / 80));
-      const gpsToNodeDist = calculateDistance(userCoords.lat, userCoords.lng, campusNodes[finalStartNode].lat, campusNodes[finalStartNode].lng);
-      walkTime += Math.round(gpsToNodeDist / 80);
-
-      mapModalStartName.textContent = `GPS 目前位置 (Snapped: ${finalStartNode})`;
-      mapModalEndName.textContent = `${end}`;
-      modalKpiWalk.textContent = walkTime + " 分鐘";
-      if (!isOpen) {
-        modalKpiWait.textContent = "非營業";
-        modalKpiTotal.textContent = "非營業";
-      } else {
-        modalKpiWait.textContent = waitTime + " 分鐘";
-        modalKpiTotal.textContent = (walkTime + waitTime) + " 分鐘";
-      }
-
-      mapModal.classList.remove("hidden");
-      document.body.style.overflow = "hidden";
-      setTimeout(() => {
-        if (activeModalMap) {
-          activeModalMap.invalidateSize();
-          const fullPath = ["GPS目前位置", ...pathResult.path];
-          drawRouteOnMap(activeModalMap, fullPath);
-        }
-      }, 200);
-
     } else {
-      modalGpsWarning.classList.add("hidden");
-      
-      const pathResult = findShortestPath(campusGraph, finalStartNode, "學生餐廳");
-      walkTime = Math.max(1, Math.round(pathResult.distance / 80));
-
-      mapModalStartName.textContent = finalStartNode;
-      mapModalEndName.textContent = `${end}`;
-      modalKpiWalk.textContent = walkTime + " 分鐘";
-      if (!isOpen) {
-        modalKpiWait.textContent = "非營業";
-        modalKpiTotal.textContent = "非營業";
+      const node = campusNodes[start];
+      if (node) {
+        startLat = node.lat;
+        startLng = node.lng;
       } else {
-        modalKpiWait.textContent = waitTime + " 分鐘";
-        modalKpiTotal.textContent = (walkTime + waitTime) + " 分鐘";
+        startLat = 25.0433;
+        startLng = 121.5345;
       }
-
-      mapModal.classList.remove("hidden");
-      document.body.style.overflow = "hidden";
-      setTimeout(() => {
-        if (activeModalMap) {
-          activeModalMap.invalidateSize();
-          drawRouteOnMap(activeModalMap, pathResult.path);
-        }
-      }, 200);
     }
-  }
-
-  // 綠色 pulsing 導航點模擬移動動畫
-  function startSimulation() {
-    if (!activeModalMap || !activeModalMap._routePolyline) return;
-
-    if (simInterval) clearInterval(simInterval);
-    if (simMarker) activeModalMap.removeLayer(simMarker);
-
-    const pathLatLngs = activeModalMap._routePolyline.getLatLngs();
-    if (pathLatLngs.length < 2) return;
-
-    simMarker = L.circleMarker(pathLatLngs[0], {
-      radius: 7,
-      color: '#ffffff',
-      fillColor: '#10b981',
-      fillOpacity: 0.95,
-      weight: 2,
-      zIndexOffset: 1000
-    }).addTo(activeModalMap);
-
-    let segmentIndex = 0;
-    let t = 0;
-    const steps = 30;
-
-    simInterval = setInterval(() => {
-      t += 1 / steps;
-      if (t >= 1) {
-        t = 0;
-        segmentIndex++;
+    
+    const destLat = 25.044027973087083;
+    const destLng = 121.53328789865442;
+    
+    let startLabel = start;
+    if (start === "gps") {
+      const distToCenter = calculateDistance(startLat, startLng, campusCenter[0], campusCenter[1]);
+      if (distToCenter > 500 || (startLat === 25.042205042013688 && startLng === 121.53542339646548)) {
+        startLabel = "正校門";
+      } else {
+        startLabel = "我的位置";
       }
-
-      if (segmentIndex >= pathLatLngs.length - 1) {
-        clearInterval(simInterval);
-        simInterval = null;
-        simMarker.setLatLng(pathLatLngs[pathLatLngs.length - 1]);
-        
-        simMarker.bindTooltip("🎉 抵達目的地", { permanent: false }).openTooltip();
-        setTimeout(() => {
-          if (simMarker && activeModalMap) {
-            activeModalMap.removeLayer(simMarker);
-            simMarker = null;
-          }
-        }, 2000);
-        return;
-      }
-
-      const p1 = pathLatLngs[segmentIndex];
-      const p2 = pathLatLngs[segmentIndex + 1];
-
-      const lat = p1.lat + (p2.lat - p1.lat) * t;
-      const lng = p1.lng + (p2.lng - p1.lng) * t;
-
-      if (simMarker) {
-        simMarker.setLatLng([lat, lng]);
-      }
-    }, 35);
+    }
+    
+    const url = `https://maps.google.com/maps?saddr=${startLat},${startLng}+(${encodeURIComponent(startLabel)})&daddr=${destLat},${destLng}+(${encodeURIComponent("學生餐廳")})&dirflg=w`;
+    window.open(url, "_blank");
   }
 
   btnRouteSubmit.addEventListener("click", () => {
@@ -1626,25 +1571,15 @@ document.addEventListener("DOMContentLoaded", () => {
       btnRouteSubmit.innerHTML = originalContent;
       btnRouteSubmit.disabled = false;
       
+      routeCalculated = true;
       calculateRoutePlanner();
-      triggerMapNavigationModal();
     }, 450);
   });
 
-  function closeMapModal() {
-    mapModal.classList.add("hidden");
-    document.body.style.overflow = "";
-    if (simInterval) clearInterval(simInterval);
-    if (simMarker && activeModalMap) {
-      activeModalMap.removeLayer(simMarker);
-      simMarker = null;
-    }
+  const btnOpenExternalMaps = document.getElementById("btn-open-external-maps");
+  if (btnOpenExternalMaps) {
+    btnOpenExternalMaps.addEventListener("click", openExternalGoogleMaps);
   }
-
-  btnCloseMapModal.addEventListener("click", closeMapModal);
-  btnModalCloseMap.addEventListener("click", closeMapModal);
-  mapModalOverlay.addEventListener("click", closeMapModal);
-  btnModalSimulate.addEventListener("click", startSimulation);
 
   populateRouteSelectors();
 
@@ -1709,8 +1644,33 @@ document.addEventListener("DOMContentLoaded", () => {
       `;
     }
 
+    const btnModalActionRoute = document.getElementById("btn-modal-action-route");
+    if (btnModalActionRoute) {
+      btnModalActionRoute.onclick = () => {
+        routeEndNode.value = storeName;
+        routeCalculated = true;
+        calculateRoutePlanner();
+        switchTab("route");
+        closeStoreModal();
+      };
+    }
+
     btnModalActionRecommend.onclick = () => {
-      recommendCategorySelect.value = canteen.type;
+      // Check if canteen.type matches any option value. If not, default to "none"
+      let hasOption = false;
+      const mappedType = categoryMapping[canteen.type] || canteen.type;
+      if (recommendCategorySelect && recommendCategorySelect.options) {
+        for (let i = 0; i < recommendCategorySelect.options.length; i++) {
+          if (recommendCategorySelect.options[i].value === mappedType || recommendCategorySelect.options[i].value === canteen.type) {
+            recommendCategorySelect.value = recommendCategorySelect.options[i].value;
+            hasOption = true;
+            break;
+          }
+        }
+      }
+      if (!hasOption) {
+        recommendCategorySelect.value = "none";
+      }
       recommendMaxWaitInput.value = "";
       closeStoreModal();
       switchTab("recommend");
