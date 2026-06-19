@@ -1099,12 +1099,11 @@ document.addEventListener("DOMContentLoaded", () => {
       endPreference = "none";
       recommendCategorySelect.value = "none";
     }
-    const currentTimeStr = recommendTimeInput.value || "12:30";
-    const maxWaitLimitVal = recommendMaxWaitInput.value.trim();
-    const maxWaitLimit = maxWaitLimitVal !== "" ? parseInt(maxWaitLimitVal, 10) : Infinity;
-
     const timeData = getTaipeiDateTime();
     const day = timeData.day;
+    const currentTimeStr = (recommendTimeInput && recommendTimeInput.value) || `${timeData.hour.toString().padStart(2, '0')}:${timeData.minute.toString().padStart(2, '0')}`;
+    const maxWaitLimitVal = recommendMaxWaitInput.value.trim();
+    const maxWaitLimit = maxWaitLimitVal !== "" ? parseInt(maxWaitLimitVal, 10) : Infinity;
     let startHour = 12;
     let startMin = 30;
     if (currentTimeStr.includes(":")) {
